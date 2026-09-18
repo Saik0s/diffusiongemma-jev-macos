@@ -239,13 +239,40 @@ def coding_fixtures() -> tuple[DecisionFixture, ...]:
     )
 
 
+def show_decisions(fixture: DecisionFixture, response: DecisionResponse) -> None:
+    """Explain the fixed public fixture; never use this to log arbitrary requests."""
+    for key, question in fixture.request.questions.items():
+        print(f"\nQuestion: {question.instructions}")
+        answer = response.answers.get(key)
+        if isinstance(answer, NoulAnswer):
+            print(f"Probability of yes: {answer.noul:.3f}")
+        elif isinstance(answer, ChoiceAnswer):
+            print(f"Selected: {answer.choice}")
+            for option, probability in answer.probabilities.items():
+                print(f"  {option}: {probability:.3f}")
+        elif isinstance(answer, ScoreAnswer):
+            print(f"Weighted score: {answer.score:.3f}")
+            for level, probability in answer.probabilities.items():
+                meaning = answer.legend.get(level, "missing level description")
+                print(f"  {level} ({meaning}): {probability:.3f}")
+        else:
+            print("No valid answer; inspect the evidence manually.")
+
+
 def run_example(name: str) -> None:
     parser = argparse.ArgumentParser(description="Run one public synthetic decision example.")
     parser.add_argument("--url", default="http://127.0.0.1:8017")
     args = parser.parse_args()
     fixture = next(fixture for fixture in coding_fixtures() if fixture.name == name)
     original = synthetic_context()
-    print("Experimental probabilities are uncalibrated; this is a synthetic preview only.")
+    scenarios = {
+        "failure_triage": "Test collection stops because Python cannot import yaml.",
+        "file_selection": "An email validator accepts addresses without an @ sign.",
+        "patch_review": "A patch replaces the authentication guard with 'if False'.",
+        "context_compaction": "An email-validation task has code evidence and a weather result.",
+    }
+    print(f"Scenario: {scenarios[name]}")
+    print("Synthetic preview. Probabilities and thresholds are uncalibrated.")
     started = perf_counter()
     try:
         with DecisionClient(args.url) as client:
@@ -259,10 +286,48 @@ def run_example(name: str) -> None:
         raise SystemExit(1) from None
     elapsed = perf_counter() - started
     passed = fixture.passed(response)
-    print(f"{name}: {'PASS' if passed else 'FAIL'}; latency={elapsed:.3f}s")
+    show_decisions(fixture, response)
+    print(f"\nExpected fixture judgments: {'PASS' if passed else 'FAIL'}; {elapsed:.3f}s")
     if name == "context_compaction":
         retained = compact_context(original, response)
-        print(f"Units retained: {len(retained)}/{len(original)}")
-        print("Retained IDs: " + ", ".join(unit.id for unit in retained))
+        original_chars = sum(len(message) for unit in original for message in unit.messages)
+        retained_chars = sum(len(message) for unit in retained for message in unit.messages)
+        print("Policy: keep pinned units; keep complete tool pairs when P(useful) >= 0.5.")
+        retained_ids = {unit.id for unit in retained}
+        for unit in original:
+            action = "KEEP" if unit.id in retained_ids else "OMIT FROM PREVIEW"
+            reason = "pinned by code" if unit.pinned else "model relevance judgment"
+            print(f"  {action}: {unit.id} ({reason})")
+        print(
+            f"Preview: {len(retained)}/{len(original)} units; "
+            f"{retained_chars}/{original_chars} chars"
+        )
+        print("The original transcript is unchanged. Retained messages keep their exact text.")
+    elif name == "failure_triage":
+        answer = response.answers.get("cause")
+        if isinstance(answer, ChoiceAnswer):
+            actions = {
+                "dependency": "Inspect dependency installation and the active Python environment.",
+                "assertion": "Inspect the failing assertion and its implementation.",
+                "network": "Inspect the failed remote request and connection settings.",
+            }
+            print(
+                "Suggested next step: "
+                + actions.get(answer.choice, "Inspect the failure manually.")
+            )
+    elif name == "file_selection":
+        answer = response.answers.get("file")
+        question = fixture.request.questions["file"]
+        if isinstance(answer, ChoiceAnswer) and isinstance(question, ChoiceQuestion):
+            print(
+                "Suggested file to read: "
+                + question.criteria.get(answer.choice, "manual search")
+            )
+    elif name == "patch_review":
+        answer = response.answers.get("security_regression")
+        if isinstance(answer, NoulAnswer) and answer.noul >= 0.5:
+            print("Suggested next step: inspect authentication before accepting the patch.")
+        else:
+            print("No authentication flag from this check; tests and review are still needed.")
     if not passed:
         raise SystemExit(1)

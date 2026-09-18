@@ -1,168 +1,161 @@
-# DiffusionGemma local decisions
+# Local decisions for coding agents
 
-A small JEV-style decision API for Apple Silicon. Give it a state and questions;
-receive Boolean probabilities, choices, or ordered scores. It runs the existing
-[OptiQ DiffusionGemma checkpoint](https://huggingface.co/mlx-community/diffusiongemma-26B-A4B-it-OptiQ-4bit)
-locally through MLX, with no hosted inference service.
+Give your coding agent a local helper for decisions such as **which function to read, which log deserves attention, and whether a fix has enough test evidence**.
 
-This is a research and education project. Probabilities are **uncalibrated** and
-the API is a documented subset of JEV, not a replacement for its trained model.
-Use the examples to explore decisions inside coding workflows; keep tests and
-human review as the authority for consequential actions.
+You supply the evidence and the allowed answers. The server returns numbers your code can rank or branch on. Everything runs on your Apple Silicon Mac.
 
-## Run
+This project is inspired by **Jev**, TypeSafe's decision model. It runs **DiffusionGemma**, a different model, through a similar interface. **Its probabilities are experimental; matching Jev's API shape does not reproduce Jev's accuracy or training.**
 
-Requires **macOS on Apple Silicon**, [uv](https://docs.astral.sh/uv/), and the model
-already downloaded. Tested on an **M2 Ultra with 64 GiB memory**. Model weights
-are external and never committed to this repository.
+## Start with one command
+
+You need **an Apple Silicon Mac**, [uv](https://docs.astral.sh/uv/getting-started/installation/), and Git. The tested machine has **64 GiB memory**. Reserve about **20 GB of free disk** for the model; measured model allocations are around **18–19 GB**, before other applications and system memory.
 
 ```sh
-uv sync --frozen
-uv run jev-local serve
+uvx --python 3.13 --from git+https://github.com/Saik0s/diffusiongemma-jev-macos jev-local start
 ```
 
-The default model directory is
-`~/.cache/lm-studio/models/mlx-community/diffusiongemma-26B-A4B-it-OptiQ-4bit`.
-Override it with `--model /path/to/model` or `JEV_MODEL_PATH`.
+This installs the Python package into uv's tool cache, downloads the model if needed, then starts the server at **http://127.0.0.1:8017**. The first download is approximately **18 GB**. Later starts reuse the files. An existing compatible LM Studio download is reused too.
 
-The service listens at **http://127.0.0.1:8017**. Wait for Uvicorn's startup
-message after the model loads. Open **http://127.0.0.1:8017/docs** for interactive
-API documentation, or call it directly:
+Wait for `Application startup complete`. Stop with **Ctrl-C**. No API key or hosted inference account is required.
+
+Already cloned this repository? The equivalent command is:
 
 ```sh
-curl http://127.0.0.1:8017/v1/systemone \
+uv run jev-local start
+```
+
+See [setup and troubleshooting](docs/setup.md) for cache locations, offline use, another port, and existing model paths.
+
+## Make your first decision
+
+In a second terminal, send a log and ask which investigation fits it:
+
+```sh
+curl -s http://127.0.0.1:8017/v1/systemone \
   -H 'Content-Type: application/json' \
   -d '{
-    "state": {"test_result": "3 passed, 1 failed"},
+    "state": "pytest cannot collect tests: ModuleNotFoundError: No module named yaml",
     "questions": {
-      "needs_investigation": {
-        "type": "noul",
-        "instructions": "Did any test fail?"
+      "next_step": {
+        "type": "choice",
+        "instructions": "Which investigation best fits this failure?",
+        "criteria": {
+          "environment": "Inspect missing dependencies and the Python environment.",
+          "assertion": "Inspect an assertion that compared the wrong values.",
+          "network": "Inspect a remote request that timed out."
+        }
       }
     }
   }'
 ```
 
-Read `answers.needs_investigation.noul` as the conditional probability of yes.
-`usage` includes measured prefill, decoder, and total inference time. The model
-stays loaded until the service stops. Stop with **Ctrl-C**.
+The response contains `answers.next_step.choice`, the selected key, and `answers.next_step.probabilities`, a number for each alternative. The intended choice for this example is `environment`; the actual numbers come from your run.
 
-## Try the coding examples
+Your code can use that choice to suggest the next step. The server itself does not run commands, edit files, or start another agent.
 
-With the server running in another terminal:
+## What is Jev, in plain language?
+
+Jev answers bounded questions for software. Instead of asking for a paragraph explaining a failure, you ask a question whose answers your program already understands.
+
+There are three building blocks:
+
+| Type | Question you might ask | Answer your code gets |
+| --- | --- | --- |
+| **Noul** | Does this function silently ignore an exception? | Probability of yes, from **0 to 1** |
+| **Choice** | Which of these files should I inspect first? | Selected option plus every option's probability |
+| **Score** | How useful is this log for diagnosing the failure? | Position on a scale whose levels you describe |
+
+**State** means the evidence you provide: code, logs, requirements, or test results. **Questions** say what to judge. **Your code** decides what happens next.
+
+```text
+Evidence + questions → local model → probabilities → your ranking or routing code
+```
+
+A number such as `0.9` is a strong model preference. **We have not shown that it means “correct 90% of the time.”** A high confidence value also cannot prove an answer right.
+
+Read [Jev concepts for developers](docs/concepts.md) for complete examples, probabilities versus confidence, Score arithmetic, and when to ask several questions together. No machine-learning background is assumed.
+
+## Where this is useful
+
+Start with narrow judgments where all necessary evidence fits in the request, and a wrong suggestion is easy to inspect:
+
+- **Search code by behavior.** Rank functions that may swallow errors, even when their names do not mention errors.
+- **Triage logs.** Build a smaller investigation bundle while keeping the original records.
+- **Check completion evidence.** Distinguish “a patch exists” from “the reported failure has a regression test.”
+- **Spot a stalled agent.** Recognize repeated retries that bring no new evidence.
+- **Preview context pruning.** Keep relevant tool exchanges and pinned instructions together.
+
+These uses come from [public Jev projects](docs/community.md), including Every, Jev Logs, Foreman, ProgressGate, and fast-jev-compaction. Our examples adapt their ideas into inspectable teaching scenarios.
+
+Use ordinary code for exact facts such as exit codes. Use a coding model to write or explain a patch. Use tests and review to establish whether the patch works. This server supplies judgments that can help decide where those tools spend effort.
+
+## Try the examples
+
+Keep the server running. To get the source and run the examples:
 
 ```sh
-uv run python examples/failure_triage.py
-uv run python examples/file_selection.py
-uv run python examples/patch_review.py
+git clone https://github.com/Saik0s/diffusiongemma-jev-macos.git
+cd diffusiongemma-jev-macos
+uv run jev-local demo search
+```
+
+Then explore the other workflows:
+
+```sh
+uv run jev-local demo logs
+uv run jev-local demo completion
+uv run jev-local demo progress
 uv run python examples/context_compaction.py
 ```
 
-The examples use public synthetic fixtures and report pass/fail and latency.
-They cover a missing dependency, choosing a relevant file, spotting an
-authentication regression, and previewing context pruning. They never inspect
-your repository, execute model-selected commands, or modify agent history.
-Compaction keeps pinned messages and tool call/result pairs intact, and retains
-the original on invalid or failed responses. See [the examples guide](docs/examples.md).
+Each demo shows the question, the model's actual judgments, and the resulting suggestion. They use small public synthetic fixtures. They do not scan your repository or control a real agent.
+Use `uv run jev-local demo all` to run all four decision workflows together.
 
-## How a decision works
+The [examples walkthrough](docs/examples.md) explains the input, policy, expected behavior, and failure handling for each workflow. It also links to the implementation you can adapt.
 
-1. Encode the state and question descriptions once.
-2. Build a short answer canvas with fixed labels such as `q0: A`. Only the answer
-   positions receive seeded noise. Every possible alias is checked to occupy
-   exactly one tokenizer position.
-3. Run one diffusion decoder pass, then normalize logits over the allowed labels.
-4. Map labels back to your IDs. Return distributions directly, with no generated
-   JSON to parse.
+## What have we measured?
 
-The default path projects only answer positions onto their allowed vocabulary
-rows. It avoids computing an entire vocabulary distribution for every canvas
-position. Short canvases and reuse of the encoded prompt across noise samples
-reduce additional work. A full-vocabulary path remains available for comparison.
+**Real-code retrieval:** on 50 CodeSearchNet queries, the local model put the labeled function first **31/50 times (62%)**, compared with **24/50 (48%)** for keyword search. Archived Jev results reached **42/50 (84%)**, with different batching. A local rerank of 30 functions took **19.1 seconds median**. This is a small pilot, not proof of a general advantage. See [the retrieval benchmark](docs/retrieval-benchmark.md) for the public source, method, and limits.
 
-## API and limits
+**Local runtime speed:** on an M2 Ultra, the earlier small synthetic suite took **291 ms median** per request with the default configuration, versus **472 ms** for the original baseline. Those tiny prompts are easier than real retrieval requests. They do not establish coding competence. See [the runtime benchmark](docs/benchmarks.md).
 
-`POST /v1/systemone` supports **1–32 questions** per request:
-
-- `noul`: `instructions` describing a yes/no proposition; returns a probability
-  from **0 to 1**.
-- `choice`: `instructions` and **2–26** named `criteria`; returns the selected
-  key, every candidate's probability, and distribution confidence.
-- `score`: `instructions` and **2–10** ordered criterion descriptions; returns
-  an expected zero-based index, the level distribution, legend, and confidence.
-
-Question instructions and criterion descriptions are strings. State can be any
-JSON value. Unknown fields are rejected. Requests are limited to **1 MiB** and
-each encoded prompt to **8,192 tokens** by default; oversized prompts are rejected,
-never silently truncated. Use `--max-prompt-tokens` to change the token limit with care.
-
-Optional `options`:
-
-```json
-{
-  "seed": 0,
-  "samples": 1,
-  "mode": "packed",
-  "projection": "labels",
-  "canvas_length": null
-}
-```
-
-`samples` accepts **1–8** noise draws, averaged after normalization. `seed` makes
-the input noise repeatable. `canvas_length: null` chooses the smallest multiple
-of 16 that fits; explicit widths are **16–256**, in steps of 16.
-`projection: "full"` enables the reference computation.
-
-**Packed mode lets questions interact.** Use `mode: "independent"` to encode and
-evaluate each question separately, at additional cost. Score levels still share
-a prompt in both modes. This differs from native JEV's conditioning.
-`confidence = 1 - entropy(probabilities) / log(number_of_choices)` measures how
-concentrated a distribution is; it does not estimate reliability. See
-[the research notes](docs/research.md) for source links and compatibility details.
-
-`GET /health` and `GET /v1/models` are available. This is a decision API, not an
-OpenAI chat endpoint. Inference is serialized on one worker, with **8 waiting
-requests**; excess requests return **503**. Health remains responsive during
-inference. Run one server process to avoid loading duplicate models.
-See the [API reference](docs/api.md) for a mixed request, timing definitions,
-limits, and error codes.
-
-## Benchmark and develop
-
-Stop the server before benchmarking so there is only one loaded model:
+To reproduce the real-code evaluation against the running server:
 
 ```sh
-uv run python -m diffusion_jev.benchmark --repeats 3 --output benchmark-results.local.json
+uv run --extra benchmark jev-local benchmark-search --limit 50 --output retrieval-results.local.json
+```
+
+The benchmark downloads public evaluation data. It does not call a paid Jev API. Its report records measurements and identifiers, without copying the source functions into the report.
+
+## Limits to understand before integrating
+
+- **A decision interface, not a chat server.** It returns Noul, Choice, and Score answers. It does not generate code or expose an OpenAI chat-completions endpoint.
+- **Evidence must be supplied.** It does not inspect your project or retain a conversation between requests.
+- **Small bounded requests.** Up to **32 questions**, **26 Choice options**, and **10 Score levels**. Default prompt limit: **8,192 tokens**, roughly chunks of text. Request body limit: **1 MiB**.
+- **Question interactions.** Default `packed` mode evaluates questions together; adding or reordering questions can affect answers. `independent` mode separates questions at additional cost.
+- **Experimental probabilities.** Thresholds in examples are demonstration policy. They are not a security boundary, deletion guarantee, or substitute for measured error rates.
+- **One local inference worker.** Requests are serialized, with **eight waiting slots**. Keep one server process running to avoid loading duplicate models.
+
+## Learn more or develop
+
+- [Concepts](docs/concepts.md): start here if Jev is new to you.
+- [Setup](docs/setup.md): installation, downloads, offline use, and troubleshooting.
+- [Examples](docs/examples.md): decisions inside coding workflows.
+- [API reference](docs/api.md): complete fields, options, limits, and errors.
+- [Community sources](docs/community.md): the projects behind these examples.
+- [Implementation notes](docs/research.md): how the local model produces answers and where it differs from Jev.
+
+Run the local checks from a checkout:
+
+```sh
+uv sync --frozen --extra benchmark
 uv run pytest -q
 uv run ruff check src tests examples
 uv run mypy
 ```
 
-The benchmark compares a 256-token full-vocabulary baseline, compact canvases,
-selected-label projection, and independent questions. It separates loading and
-first-request setup from warm timings and checks synthetic decision quality.
-Reports contain measurements and aggregate checks, not prompt or answer payloads.
-On the measured M2 Ultra workload, the default reduced warm median latency from
-**472 to 291 ms (1.62×)**, with **60/60 synthetic judgments** correct. A batch of
-32 simple predicates took **1.08 seconds**. This small suite is not a general
-coding-quality evaluation; see [the benchmark report](docs/benchmarks.md) for
-methodology, individual examples, memory use, and limitations.
+Inference stays on your machine. The server does not store prompts or answers or emit request access logs. Downloads need internet; inference can run offline once dependencies and model files exist. The interactive `/docs` page loads its interface assets from a CDN.
 
-The runtime pins **mlx-optiq 0.5.12** and the lockfile pins dependencies. Its small
-internal decoder interface is covered by the real-model benchmark; recheck that
-benchmark when upgrading OptiQ. Stock `mlx-lm` and `mlx-vlm` do not load this quant.
+The default listener is local-only and has no authentication. Binding another interface exposes it to that network.
 
-## Local data and license
-
-Inference runs on this machine. The service does not write prompts, answers, or
-access logs, and keeps no cross-request prompt cache. Validation and inference
-errors omit submitted content. The default loopback listener has no
-authentication; keep it local. Explicitly binding another interface exposes it
-to that network. Swagger's documentation page loads its UI assets from a CDN;
-the inference API itself needs no internet after dependencies and weights exist.
-
-Code is [MIT licensed](LICENSE). Model weights have separate upstream terms.
-Inspired by [JEV](https://docs.typesafe.ai/primitives),
-[vLLM's structured-read proposal](https://github.com/vllm-project/vllm/pull/57250),
-[NanoJev](https://github.com/TianyuCodings/NanoJev), and
-[fast-jev-compaction](https://github.com/tamaratran/fast-jev-compaction).
+Code is [MIT licensed](LICENSE). Model weights and evaluation datasets retain their own upstream terms. The [OptiQ model card](https://huggingface.co/mlx-community/diffusiongemma-26B-A4B-it-OptiQ-4bit) documents the required runtime; stock `mlx-lm` and `mlx-vlm` cannot load this checkpoint.

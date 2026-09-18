@@ -1,4 +1,13 @@
-# M2 Ultra benchmark
+# Local runtime speed on an M2 Ultra
+
+This report asks **how quickly the server evaluates small requests** and which
+implementation changes save time. For quality on real Python functions, use the
+separate [CodeSearchNet evaluation](retrieval-benchmark.md).
+
+In this report, **median (p50)** is the middle measured time; **p95** is the time
+below which 95% of measurements fall. A **canvas** is the model's short answer
+workspace. **Prefill** means reading the input. **Projection** is the final
+calculation that turns model values into preferences for allowed answers.
 
 The default configuration reduced median warm latency from **472 ms to 291 ms
 (1.62× faster)** on the measured mixed workload. Most of the gain came from

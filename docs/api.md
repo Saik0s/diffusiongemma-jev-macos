@@ -1,7 +1,55 @@
 # API reference
 
-Start `uv run jev-local serve`, then use `http://127.0.0.1:8017`. The interactive
+Send evidence and bounded questions to **`POST /v1/systemone`**. The response contains
+typed answers your code can use directly, without parsing generated prose.
+
+Start `uv run jev-local start`, then use `http://127.0.0.1:8017`. The interactive
 schema is at `/docs`; the machine-readable schema is at `/openapi.json`.
+For the meaning of state, Noul, Choice, Score, and confidence, start with
+[the concepts guide](concepts.md). This page documents the local implementation.
+
+## Call it from Python
+
+Run this from an environment containing the package, with the server running:
+
+```python
+from diffusion_jev.client import DecisionClient, DecisionClientError
+from diffusion_jev.schemas import DecisionRequest, NoulAnswer, NoulQuestion
+
+request = DecisionRequest(
+    state={
+        "function": "def parse_count(text):\n"
+        "    try: return int(text)\n"
+        "    except ValueError: return 0",
+    },
+    questions={
+        "hides_error": NoulQuestion(
+            type="noul",
+            instructions="Does this function catch an exception without reporting it?",
+        ),
+    },
+)
+
+try:
+    with DecisionClient() as client:
+        answer = client.decide(request).answers.get("hides_error")
+    if isinstance(answer, NoulAnswer):
+        print(f"Probability of yes: {answer.noul:.3f}")
+        print("Inspect this function before deciding whether its fallback is appropriate.")
+    else:
+        print("No usable answer. Keep the function available for manual review.")
+except DecisionClientError:
+    print("The request failed. Keep the function available for manual review.")
+```
+
+The printed number is the model's judgment. Returning zero after a parse failure may
+be intentional, so detecting that behavior alone does not establish a bug.
+
+`DecisionClient` accepts `base_url`, defaults to the local address above, and uses a
+**120-second timeout**. It validates the response shape and raises `DecisionClientError`
+without exposing the request or raw response. Check that the expected question IDs
+and answer types are present before acting. The workflow examples also validate
+Choice distributions and Score legends against their requests.
 
 ## One request, three decision types
 

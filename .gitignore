@@ -10,5 +10,6 @@ dist/
 .DS_Store
 .env
 benchmark-results.local.json
+retrieval-results.local.json
 *.safetensors
 *.gguf

@@ -1,129 +1,144 @@
-# Research and semantic boundaries
+# How the local decision engine works
 
-This project explores typed decisions from DiffusionGemma on Apple Silicon. It
-borrows Jev's API shape, not Jev's model, training method, calibration, or quality
-claims. Source review date: 2026-09-18.
+This page explains the implementation and its limits. You can use the server without knowing these details.
+For the user-facing concepts, start with [Jev concepts for developers](concepts.md).
+Source review date: **September 18, 2026**.
 
-## The useful idea
+## The interface and the model are separate choices
 
-A coding workflow often needs a bounded judgment rather than generated prose:
-which file to inspect, whether a failure concerns authentication, or how strongly
-a patch deserves review. The caller supplies the candidates; model probabilities
-become inputs to ordinary application logic.
+A decision API defines how software supplies evidence and receives answers.
+Training determines how well a model makes those decisions.
+This project implements a local interface inspired by [TypeSafe's primitives](https://docs.typesafe.ai/primitives), using an existing DiffusionGemma checkpoint.
+It does not reproduce Jev's training, calibration, or quality.
 
-[TypeSafe's primitive documentation](https://docs.typesafe.ai/primitives) defines
-three question types sharing a state. Question IDs identify responses but are not
-semantic model inputs. Questions are independent; a judgment requiring an earlier
-answer needs another request with that answer in its state.
+That distinction matters when reading a benchmark.
+A result from hosted Jev, NanoJev, or another local adapter is not a result for this model.
+The [public retrieval evaluation](retrieval-benchmark.md) therefore labels archived Jev measurements separately.
 
-## API shape and limits
+## From JSON to a short answer workspace
 
-The local endpoint is `POST /v1/systemone`. Requests contain `model`, `state`, and
-a `questions` mapping. Each question supplies `type`, `instructions`, and, where
-needed, `criteria`. Responses map the original IDs to typed `answers`.
+The implementation has four stages:
 
-- [Noul](https://docs.typesafe.ai/primitives/noul): a yes/no proposition. The
-  answer's `noul` is the probability of yes, with no separate confidence field.
-  Native JEV additionally accepts `criteria.true` and `criteria.false`; this
-  local subset takes the proposition and any clarification in `instructions`.
-- [Choice](https://docs.typesafe.ai/primitives/choice): named alternatives and
-  descriptions in a criteria mapping. Return `choice`, complete `probabilities`,
-  and `confidence`. This project supports **2–26** alternatives; TypeSafe
-  documents a maximum of **255**.
-- [Score](https://docs.typesafe.ai/primitives/score): **2–10** ordered descriptions.
-  Return `score`, `legend`, complete `probabilities`, and `confidence`. Indices
-  start at zero and `score = sum(index * probability)`.
+1. **Read the input.** Serialize the state and question descriptions, then convert the text into tokens, the model's numbered text pieces.
+2. **Prepare answer positions.** Create a short sequence called a *canvas*, with fixed labels and a position for each answer.
+3. **Evaluate the canvas.** Run one diffusion decoder pass for each requested noise sample.
+4. **Return numbers.** Read the model's preference for allowed answer labels and construct the JSON response in Python.
 
-## Direct diffusion reads
+The model does not generate response JSON or an explanation.
+Your original question IDs identify answers in the response, while positional aliases such as `q0` identify slots internally.
+Choice candidate names and descriptions are still part of the model's input.
 
-[vLLM PR #57250](https://github.com/vllm-project/vllm/pull/57250), open when reviewed,
-demonstrates seeded diffusion canvases with bounded answer slots. Its mechanics
-include a maximum denoising-step count, read-only output without a commit forward,
-and requested label-token log probabilities. It deliberately leaves the public
-question API to an external adapter. Each answer label must occupy one tokenizer
-token so the canvas positions remain fixed.
+The design draws on the [vLLM structured-read proposal, PR #57250](https://github.com/vllm-project/vllm/pull/57250).
+That proposal separates low-level diffusion reads from a public question API.
+Our adapter provides that question API using the OptiQ runtime on Apple Silicon.
 
-The local design pins `mlx-optiq==0.5.12` and reads the seeded canvas directly.
-It does not generate answer text. One decoder pass evaluates each noise sample;
-the prompt encoder result is reused across samples. Original question IDs are
-replaced with positional labels such as `q0` before prompt construction.
+## Why each allowed answer must fit one token
 
-At an answer slot, the selected label logits are normalized over the permitted
-aliases only:
+The canvas needs a stable answer position.
+The adapter maps permitted answers to short internal labels and checks their tokenization.
+Alternatives must differ at exactly one token position, or the request cannot use this readout safely.
+
+Only the answer positions receive seeded random starting values.
+Surrounding formatting stays fixed. The default canvas is the smallest multiple of 16 that fits the answer scaffold.
+Explicit canvas lengths range from **16 to 256**, in steps of 16.
+A different canvas width can change answers, so it is part of the benchmark configuration.
+
+## How preferences become probabilities
+
+At each answer position, the model produces numerical preferences called *logits*.
+The adapter selects only the permitted labels and normalizes them:
 
 ```text
-p_i = exp(logit_i - max(logits)) / sum_j exp(logit_j - max(logits))
+probability(label i) = exp(logit i) / sum(exp(logit j) for each allowed label j)
 ```
 
-This is a distribution conditional on the offered labels. It excludes probability
-mass assigned to other vocabulary tokens. Repeated noise samples can characterize
-variation in this readout; agreement does not establish correctness.
+The implementation subtracts the largest logit before exponentiation for numerical stability.
+The resulting probabilities add to one **among the labels you offered**.
+They exclude every other word or token the model might prefer.
 
-## Conditioning is not native Jev parity
+This guarantees a valid distribution over your choices. It does not establish that the choices are correct or well calibrated.
+For example, two poor alternatives still divide the full probability between them.
 
-Default **packed** mode places questions together in a prompt and canvas. Their
-representations can interact, so adding a question may change another answer.
-**Independent** mode isolates questions into separate model inputs.
+## What extra samples do
 
-Even independent mode treats Score as a joint choice over ordered descriptions.
-Native TypeSafe Score instead evaluates each level without its index or neighboring
-levels. Isolating questions therefore does not reproduce native Score conditioning.
-See the [Score contract](https://docs.typesafe.ai/primitives/score).
+`options.samples` accepts **1–8** independent starting-noise draws.
+The server reuses the already-read input, evaluates each draw once, and averages the resulting probabilities.
+These are not successive steps refining one answer.
 
-The local confidence convention is `1 - H(p) / log(N)`, where
-`H(p) = -sum(p_i * log(p_i))` and zero terms contribute zero. A uniform
-distribution has confidence zero; a point mass has confidence one. This is a
-concentration statistic, **not measured calibration**. TypeSafe's
-[confidence documentation](https://docs.typesafe.ai/confidence) does not specify
-its exact formula, so numeric parity is not claimed.
+`options.seed` makes the starting noise repeatable.
+Agreement across samples measures stability under this readout, not truth.
+Exact floating-point results may still vary with hardware or runtime versions.
 
-## A small optimization worth measuring
+## Packed versus independent questions
 
-Only answer positions and permitted alias logits are needed. Select those decoder
-hidden states and project onto the corresponding embedding rows instead of
-materializing every canvas position's full vocabulary logits. Apply the same
-normalization and any output transformations as the full projection.
+Default **packed** mode puts several questions in the same input and canvas.
+This saves repeated input processing, but the questions can influence each other.
+Adding, removing, or reordering a question can therefore change another answer.
 
-Compare the optimized result with the full-vocabulary baseline using identical
-inputs and noise: selected logits, probabilities, decisions, elapsed time, and
-peak memory. This can reduce projection work and output allocation; it does not
-remove decoder attention or expert computation. A benchmark must establish the
-actual benefit on the target hardware.
+**Independent** mode builds a separate model input for every question.
+It costs more time because the state is read again for each question.
+It still evaluates the alternatives within a Choice or Score together.
 
-## Useful examples and comparison projects
+Native Jev documents independent question evaluation and different Score conditioning.
+Local independent mode therefore narrows one difference; it does not provide native Jev parity.
+See [the official state contract](https://docs.typesafe.ai/concepts/state) and [Score contract](https://docs.typesafe.ai/primitives/score).
 
-Failure triage combines focused Nouls with a Choice of failure causes.
-File selection builds candidates from supplied file summaries. Patch review
-combines an authentication finding with a review-priority Score. These are decision
-helpers, not code generators or substitutes for tests.
+## Exact response differences from native Jev
 
-[fast-jev-compaction](https://github.com/tamaratran/fast-jev-compaction) demonstrates
-a fourth use: separate keep-call and keep-result judgments while preserving
-retained content verbatim and pairing results with their calls. Its documentation
-also makes clear that probability is not proof a result can safely be deleted.
-An educational adaptation should preview its decisions and retain the original
-transcript on validation failure.
+- **Noul:** the local schema takes the proposition in `instructions`. Native Jev also accepts separate `criteria.true` and `criteria.false` descriptions.
+- **Choice:** this implementation accepts **2–26 alternatives**. TypeSafe documents up to **255**. The returned winner has the highest supplied-label probability.
+- **Score:** this implementation accepts **2–10 ordered descriptions** and evaluates them together. It returns the probability-weighted zero-based index and a legend.
+- **Confidence:** local Choice and Score use the formula below. TypeSafe's public documentation does not specify that exact formula, so numeric equivalence is not claimed.
 
-[NanoJev's contract audit](https://github.com/TianyuCodings/NanoJev/blob/main/docs/TYPESAFE_CONTRACT.md)
-is useful for distinguishing a compatible response shape from compatible
-conditioning. Its local schema and encoder have documented gaps, including
-`boolean` versus `noul`, structured entries, confidence, and Score legends. Its
-game-trained decision heads do not establish coding-task performance here.
+For `N` alternatives and probabilities `p`, the local concentration statistic is:
 
-## Runtime and licenses
+```text
+H(p) = -sum(p[i] * log(p[i]))
+confidence = 1 - H(p) / log(N)
+```
 
-The [OptiQ model card](https://huggingface.co/mlx-community/diffusiongemma-26B-A4B-it-OptiQ-4bit)
-explicitly warns that stock `mlx-lm` and `mlx-vlm` cannot load this diffusion
-checkpoint; its documented route uses OptiQ's diffusion decoder. Generic hosting
-snippets on the model page should not override that model-specific warning.
+Zero-probability terms contribute zero.
+An even distribution produces confidence zero; all weight on one alternative produces confidence one.
+This quantity measures how concentrated the answer is, not its empirically measured reliability.
+See the [official confidence guide](https://docs.typesafe.ai/confidence) for the native product's explanation.
 
-Model weights remain an external dependency with their own license and upstream
-terms; this repository's license does not relicense them. The model card currently
-labels the checkpoint Apache-2.0. Verify the selected revision's license before
-redistributing weights.
+## Where the optimization saves work
 
-[NanoJev](https://github.com/TianyuCodings/NanoJev/blob/main/LICENSE) and
-[fast-jev-compaction](https://github.com/tamaratran/fast-jev-compaction/blob/main/LICENSE)
-publish MIT licenses. Retain required notices if copying substantial portions.
-This project does not train or fine-tune a model, reproduce Jev's training, or
-claim native Jev decision quality.
+A general output calculation can score the entire vocabulary at every canvas position.
+This API only needs the answer positions and their allowed labels.
+The default path selects those positions and the corresponding output-weight rows before calculating the scores.
+
+Both paths apply the pinned model's exact output transformation, including its float32 softcap.
+The `projection: "full"` reference path remains available to compare numerical results.
+On the earlier measured suite, the compact full path and selected-label path returned identical selected probabilities.
+See [the measured comparison](benchmarks.md).
+
+Shortening the answer canvas produced most of that suite's speedup.
+Selecting fewer output scores produced a smaller additional gain.
+Neither change avoids reading the input or doing the model's internal computation, so longer real-code requests can take much longer.
+
+The server keeps the model loaded and reuses input processing across samples within one request.
+It does not keep a cross-request prompt cache.
+One worker thread loads and calls the model because MLX's lazy GPU values can depend on thread-local streams.
+
+## Why the runtime is pinned
+
+The [OptiQ model card](https://huggingface.co/mlx-community/diffusiongemma-26B-A4B-it-OptiQ-4bit) warns that stock `mlx-lm` and `mlx-vlm` cannot load this checkpoint.
+We pin **mlx-optiq 0.5.12**, **MLX 0.32.2**, and the **Hugging Face downloader 1.32.0**.
+The checkout's lockfile fixes the remaining package environment.
+The engine uses a small internal decoder interface, so runtime upgrades require a real-model recheck.
+
+`start` downloads an immutable model revision and checks a bundled size/hash manifest.
+Existing user-managed model directories receive structural checks rather than a claim of verified provenance.
+The [setup guide](setup.md) explains selection and verification behavior.
+
+## What would establish stronger claims?
+
+For a useful application claim, evaluate held-out cases from that workflow and record what happens after the decision.
+Retrieval quality alone cannot show that a coding agent fixes more issues or safely removes conversation history.
+
+For calibration, compare predicted probabilities against observed labels across enough examples, including hard and ambiguous cases.
+For performance, report input size, hardware, queueing, warmup, and the actual end-to-end operation being timed.
+
+The [community guide](community.md) lists practical designs and external benchmarks worth studying.
+Model weights and datasets retain their separate upstream licenses; this repository's MIT license applies to its own code.
