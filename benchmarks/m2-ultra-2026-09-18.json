@@ -1,0 +1,2673 @@
+{
+  "schema_version": 1,
+  "timestamp_utc": "2026-09-18T17:13:31.617355+00:00",
+  "environment": {
+    "system": "Darwin 27.0.0",
+    "architecture": "arm64",
+    "chip": "Apple M2 Ultra",
+    "memory_bytes": 68719476736,
+    "python": "3.13.9",
+    "packages": {
+      "diffusion-jev": "0.1.0",
+      "mlx": "0.32.2",
+      "mlx-optiq": "0.5.12",
+      "pydantic": "2.13.5"
+    },
+    "model_basename": "diffusiongemma-26B-A4B-it-OptiQ-4bit",
+    "reference_model_hf_id": "mlx-community/diffusiongemma-26B-A4B-it-OptiQ-4bit"
+  },
+  "repeats": 3,
+  "configurations": {
+    "baseline_full_256": {
+      "seed": 0,
+      "samples": 1,
+      "mode": "packed",
+      "projection": "full",
+      "canvas_length": 256
+    },
+    "compact_full": {
+      "seed": 0,
+      "samples": 1,
+      "mode": "packed",
+      "projection": "full",
+      "canvas_length": null
+    },
+    "optimized": {
+      "seed": 0,
+      "samples": 1,
+      "mode": "packed",
+      "projection": "labels",
+      "canvas_length": null
+    },
+    "independent": {
+      "seed": 0,
+      "samples": 1,
+      "mode": "independent",
+      "projection": "labels",
+      "canvas_length": null
+    }
+  },
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "percentile_method": "nearest-rank: sorted[ceil(p*n)-1]",
+  "correctness_method": "Noul >= 0.5; Choice exact; Score probability argmax level",
+  "warmup_policy": "One excluded warmup per case/configuration before measured repeats",
+  "order_policy": "Rotate configurations each repeat; reverse on odd repeats",
+  "load_seconds": 12.678406082995934,
+  "first_request": {
+    "case": "mixed_1",
+    "configuration": "baseline_full_256",
+    "seed": 0,
+    "wall_ms": 4552.408333023777,
+    "correct": 3,
+    "questions": 3,
+    "usage": {
+      "prompt_tokens": 193,
+      "questions": 3,
+      "decoder_passes": 1,
+      "canvas_tokens": 256,
+      "prefill_ms": 3597.332915989682,
+      "decode_ms": 918.0087909917347,
+      "total_ms": 4552.275249996455,
+      "peak_memory_gb": 18.610076174
+    }
+  },
+  "quality": {
+    "baseline_full_256": {
+      "requests": 24,
+      "questions": 60,
+      "correct": 60,
+      "accuracy": 1.0,
+      "wall_p50_ms": 472.1525839995593,
+      "wall_p95_ms": 561.5380000090227,
+      "questions_per_second": 5.139738422748869,
+      "prefill_median_ms": 210.977811992052,
+      "decode_median_ms": 260.5127499991795,
+      "prompt_tokens_median": 193.0,
+      "canvas_tokens_median": 256.0,
+      "peak_memory_gb": 18.65444399
+    },
+    "compact_full": {
+      "requests": 24,
+      "questions": 60,
+      "correct": 60,
+      "accuracy": 1.0,
+      "wall_p50_ms": 295.2365000091959,
+      "wall_p95_ms": 362.42283301544376,
+      "questions_per_second": 8.265924336944172,
+      "prefill_median_ms": 210.56918750400655,
+      "decode_median_ms": 83.86141649680212,
+      "prompt_tokens_median": 193.0,
+      "canvas_tokens_median": 32.0,
+      "peak_memory_gb": 18.29976126
+    },
+    "optimized": {
+      "requests": 24,
+      "questions": 60,
+      "correct": 60,
+      "accuracy": 1.0,
+      "wall_p50_ms": 290.6720419996418,
+      "wall_p95_ms": 358.5432500112802,
+      "questions_per_second": 8.471417187407598,
+      "prefill_median_ms": 210.6168960017385,
+      "decode_median_ms": 79.47006299218629,
+      "prompt_tokens_median": 193.0,
+      "canvas_tokens_median": 32.0,
+      "peak_memory_gb": 18.29976126
+    },
+    "independent": {
+      "requests": 24,
+      "questions": 60,
+      "correct": 60,
+      "accuracy": 1.0,
+      "wall_p50_ms": 659.389167005429,
+      "wall_p95_ms": 728.7621250143275,
+      "questions_per_second": 4.177246934898885,
+      "prefill_median_ms": 493.3330200146884,
+      "decode_median_ms": 165.58508298476227,
+      "prompt_tokens_median": 361.0,
+      "canvas_tokens_median": 48.0,
+      "peak_memory_gb": 18.232488556
+    }
+  },
+  "quality_by_case": {
+    "baseline_full_256": {
+      "mixed_1": {
+        "requests": 3,
+        "questions": 9,
+        "correct": 9,
+        "accuracy": 1.0,
+        "wall_p50_ms": 471.75441699801013,
+        "wall_p95_ms": 472.9281670006458,
+        "questions_per_second": 6.354726290859998,
+        "prefill_median_ms": 211.0975419927854,
+        "decode_median_ms": 259.86854199436493,
+        "prompt_tokens_median": 193.0,
+        "canvas_tokens_median": 256.0,
+        "peak_memory_gb": 18.610043398
+      },
+      "mixed_2": {
+        "requests": 3,
+        "questions": 9,
+        "correct": 9,
+        "accuracy": 1.0,
+        "wall_p50_ms": 471.45212499890476,
+        "wall_p95_ms": 471.7486249865033,
+        "questions_per_second": 6.3706273511661005,
+        "prefill_median_ms": 210.18129101139493,
+        "decode_median_ms": 260.252332984237,
+        "prompt_tokens_median": 193.0,
+        "canvas_tokens_median": 256.0,
+        "peak_memory_gb": 18.610043398
+      },
+      "mixed_3": {
+        "requests": 3,
+        "questions": 9,
+        "correct": 9,
+        "accuracy": 1.0,
+        "wall_p50_ms": 472.02945899334736,
+        "wall_p95_ms": 487.77612499543466,
+        "questions_per_second": 6.289559982763253,
+        "prefill_median_ms": 210.57112500420772,
+        "decode_median_ms": 260.7708330033347,
+        "prompt_tokens_median": 193.0,
+        "canvas_tokens_median": 256.0,
+        "peak_memory_gb": 18.610043398
+      },
+      "mixed_4": {
+        "requests": 3,
+        "questions": 9,
+        "correct": 9,
+        "accuracy": 1.0,
+        "wall_p50_ms": 471.66908299550414,
+        "wall_p95_ms": 472.1525839995593,
+        "questions_per_second": 6.3641670039680625,
+        "prefill_median_ms": 210.59854101622477,
+        "decode_median_ms": 260.2746660122648,
+        "prompt_tokens_median": 193.0,
+        "canvas_tokens_median": 256.0,
+        "peak_memory_gb": 18.610043398
+      },
+      "failure_triage": {
+        "requests": 3,
+        "questions": 9,
+        "correct": 9,
+        "accuracy": 1.0,
+        "wall_p50_ms": 495.0097499822732,
+        "wall_p95_ms": 496.5262920013629,
+        "questions_per_second": 6.058093073886848,
+        "prefill_median_ms": 233.9237500273157,
+        "decode_median_ms": 260.24637499358505,
+        "prompt_tokens_median": 229.0,
+        "canvas_tokens_median": 256.0,
+        "peak_memory_gb": 18.619382266
+      },
+      "file_selection": {
+        "requests": 3,
+        "questions": 3,
+        "correct": 3,
+        "accuracy": 1.0,
+        "wall_p50_ms": 458.26137499534525,
+        "wall_p95_ms": 485.4794580023736,
+        "questions_per_second": 2.143733010909357,
+        "prefill_median_ms": 197.71745800971985,
+        "decode_median_ms": 259.85529099125415,
+        "prompt_tokens_median": 178.0,
+        "canvas_tokens_median": 256.0,
+        "peak_memory_gb": 18.605849042
+      },
+      "patch_review": {
+        "requests": 3,
+        "questions": 6,
+        "correct": 6,
+        "accuracy": 1.0,
+        "wall_p50_ms": 476.40137499547563,
+        "wall_p95_ms": 476.6779580095317,
+        "questions_per_second": 4.199655838235745,
+        "prefill_median_ms": 213.58408400556073,
+        "decode_median_ms": 261.91895798547193,
+        "prompt_tokens_median": 200.0,
+        "canvas_tokens_median": 256.0,
+        "peak_memory_gb": 18.611239406
+      },
+      "context_compaction": {
+        "requests": 3,
+        "questions": 6,
+        "correct": 6,
+        "accuracy": 1.0,
+        "wall_p50_ms": 561.5380000090227,
+        "wall_p95_ms": 562.8673329774756,
+        "questions_per_second": 3.5589290702985115,
+        "prefill_median_ms": 300.14974999357946,
+        "decode_median_ms": 260.5231250054203,
+        "prompt_tokens_median": 341.0,
+        "canvas_tokens_median": 256.0,
+        "peak_memory_gb": 18.65444399
+      }
+    },
+    "compact_full": {
+      "mixed_1": {
+        "requests": 3,
+        "questions": 9,
+        "correct": 9,
+        "accuracy": 1.0,
+        "wall_p50_ms": 296.14749999018386,
+        "wall_p95_ms": 303.1895410094876,
+        "questions_per_second": 10.058042830897264,
+        "prefill_median_ms": 210.6969169981312,
+        "decode_median_ms": 84.59495898569003,
+        "prompt_tokens_median": 193.0,
+        "canvas_tokens_median": 32.0,
+        "peak_memory_gb": 18.157433398
+      },
+      "mixed_2": {
+        "requests": 3,
+        "questions": 9,
+        "correct": 9,
+        "accuracy": 1.0,
+        "wall_p50_ms": 295.0538750155829,
+        "wall_p95_ms": 298.59583399957046,
+        "questions_per_second": 10.130280084218004,
+        "prefill_median_ms": 210.184166993713,
+        "decode_median_ms": 84.13154099253006,
+        "prompt_tokens_median": 193.0,
+        "canvas_tokens_median": 32.0,
+        "peak_memory_gb": 18.157433398
+      },
+      "mixed_3": {
+        "requests": 3,
+        "questions": 9,
+        "correct": 9,
+        "accuracy": 1.0,
+        "wall_p50_ms": 295.2365000091959,
+        "wall_p95_ms": 296.2978339928668,
+        "questions_per_second": 10.151100530166682,
+        "prefill_median_ms": 210.4414580098819,
+        "decode_median_ms": 83.86212500045076,
+        "prompt_tokens_median": 193.0,
+        "canvas_tokens_median": 32.0,
+        "peak_memory_gb": 18.157433398
+      },
+      "mixed_4": {
+        "requests": 3,
+        "questions": 9,
+        "correct": 9,
+        "accuracy": 1.0,
+        "wall_p50_ms": 295.1035420119297,
+        "wall_p95_ms": 310.7540000055451,
+        "questions_per_second": 10.002172227134905,
+        "prefill_median_ms": 209.57087498391047,
+        "decode_median_ms": 84.13991698762402,
+        "prompt_tokens_median": 193.0,
+        "canvas_tokens_median": 32.0,
+        "peak_memory_gb": 18.157433398
+      },
+      "failure_triage": {
+        "requests": 3,
+        "questions": 9,
+        "correct": 9,
+        "accuracy": 1.0,
+        "wall_p50_ms": 318.32916699931957,
+        "wall_p95_ms": 319.6002079930622,
+        "questions_per_second": 9.415571146916832,
+        "prefill_median_ms": 233.65870901034214,
+        "decode_median_ms": 83.78224997431971,
+        "prompt_tokens_median": 229.0,
+        "canvas_tokens_median": 32.0,
+        "peak_memory_gb": 18.214412742
+      },
+      "file_selection": {
+        "requests": 3,
+        "questions": 3,
+        "correct": 3,
+        "accuracy": 1.0,
+        "wall_p50_ms": 258.44674999825656,
+        "wall_p95_ms": 292.0809999923222,
+        "questions_per_second": 3.713738247465315,
+        "prefill_median_ms": 197.1568749868311,
+        "decode_median_ms": 60.54899998707697,
+        "prompt_tokens_median": 178.0,
+        "canvas_tokens_median": 16.0,
+        "peak_memory_gb": 18.131055158
+      },
+      "patch_review": {
+        "requests": 3,
+        "questions": 6,
+        "correct": 6,
+        "accuracy": 1.0,
+        "wall_p50_ms": 275.3096249944065,
+        "wall_p95_ms": 287.73408400593325,
+        "questions_per_second": 7.1573827956541205,
+        "prefill_median_ms": 212.7043340005912,
+        "decode_median_ms": 61.8561249866616,
+        "prompt_tokens_median": 200.0,
+        "canvas_tokens_median": 16.0,
+        "peak_memory_gb": 18.168728134
+      },
+      "context_compaction": {
+        "requests": 3,
+        "questions": 6,
+        "correct": 6,
+        "accuracy": 1.0,
+        "wall_p50_ms": 362.42283301544376,
+        "wall_p95_ms": 362.544292001985,
+        "questions_per_second": 5.519238455352641,
+        "prefill_median_ms": 300.1962080015801,
+        "decode_median_ms": 61.35212499066256,
+        "prompt_tokens_median": 341.0,
+        "canvas_tokens_median": 16.0,
+        "peak_memory_gb": 18.29976126
+      }
+    },
+    "optimized": {
+      "mixed_1": {
+        "requests": 3,
+        "questions": 9,
+        "correct": 9,
+        "accuracy": 1.0,
+        "wall_p50_ms": 290.8307090110611,
+        "wall_p95_ms": 291.52175001217984,
+        "questions_per_second": 10.31104901585589,
+        "prefill_median_ms": 210.6452920124866,
+        "decode_median_ms": 79.42404199275188,
+        "prompt_tokens_median": 193.0,
+        "canvas_tokens_median": 32.0,
+        "peak_memory_gb": 18.157433398
+      },
+      "mixed_2": {
+        "requests": 3,
+        "questions": 9,
+        "correct": 9,
+        "accuracy": 1.0,
+        "wall_p50_ms": 291.2317500158679,
+        "wall_p95_ms": 291.4984580129385,
+        "questions_per_second": 10.313368858910458,
+        "prefill_median_ms": 210.32158299931325,
+        "decode_median_ms": 79.65400000102818,
+        "prompt_tokens_median": 193.0,
+        "canvas_tokens_median": 32.0,
+        "peak_memory_gb": 18.157433398
+      },
+      "mixed_3": {
+        "requests": 3,
+        "questions": 9,
+        "correct": 9,
+        "accuracy": 1.0,
+        "wall_p50_ms": 290.46587500488386,
+        "wall_p95_ms": 291.2934999912977,
+        "questions_per_second": 10.318468051334111,
+        "prefill_median_ms": 209.94137501111254,
+        "decode_median_ms": 79.75341699784622,
+        "prompt_tokens_median": 193.0,
+        "canvas_tokens_median": 32.0,
+        "peak_memory_gb": 18.157433398
+      },
+      "mixed_4": {
+        "requests": 3,
+        "questions": 9,
+        "correct": 9,
+        "accuracy": 1.0,
+        "wall_p50_ms": 290.6720419996418,
+        "wall_p95_ms": 291.3967079948634,
+        "questions_per_second": 10.320653626028365,
+        "prefill_median_ms": 210.07425000425428,
+        "decode_median_ms": 79.77504099835642,
+        "prompt_tokens_median": 193.0,
+        "canvas_tokens_median": 32.0,
+        "peak_memory_gb": 18.157433398
+      },
+      "failure_triage": {
+        "requests": 3,
+        "questions": 9,
+        "correct": 9,
+        "accuracy": 1.0,
+        "wall_p50_ms": 314.0854589873925,
+        "wall_p95_ms": 314.08862498938106,
+        "questions_per_second": 9.562176273723782,
+        "prefill_median_ms": 233.57479201513343,
+        "decode_median_ms": 79.59970799856819,
+        "prompt_tokens_median": 229.0,
+        "canvas_tokens_median": 32.0,
+        "peak_memory_gb": 18.214412742
+      },
+      "file_selection": {
+        "requests": 3,
+        "questions": 3,
+        "correct": 3,
+        "accuracy": 1.0,
+        "wall_p50_ms": 254.58237499697134,
+        "wall_p95_ms": 256.492167012766,
+        "questions_per_second": 3.92028535137659,
+        "prefill_median_ms": 197.7362500037998,
+        "decode_median_ms": 56.08183299773373,
+        "prompt_tokens_median": 178.0,
+        "canvas_tokens_median": 16.0,
+        "peak_memory_gb": 18.131055158
+      },
+      "patch_review": {
+        "requests": 3,
+        "questions": 6,
+        "correct": 6,
+        "accuracy": 1.0,
+        "wall_p50_ms": 269.4518330099527,
+        "wall_p95_ms": 272.8484999970533,
+        "questions_per_second": 7.393718002313106,
+        "prefill_median_ms": 212.38212499883957,
+        "decode_median_ms": 56.28000001888722,
+        "prompt_tokens_median": 200.0,
+        "canvas_tokens_median": 16.0,
+        "peak_memory_gb": 18.168728134
+      },
+      "context_compaction": {
+        "requests": 3,
+        "questions": 6,
+        "correct": 6,
+        "accuracy": 1.0,
+        "wall_p50_ms": 358.5432500112802,
+        "wall_p95_ms": 358.63470801268704,
+        "questions_per_second": 5.5818230721281825,
+        "prefill_median_ms": 300.3878750023432,
+        "decode_median_ms": 57.150542008457705,
+        "prompt_tokens_median": 341.0,
+        "canvas_tokens_median": 16.0,
+        "peak_memory_gb": 18.29976126
+      }
+    },
+    "independent": {
+      "mixed_1": {
+        "requests": 3,
+        "questions": 9,
+        "correct": 9,
+        "accuracy": 1.0,
+        "wall_p50_ms": 660.3817910072394,
+        "wall_p95_ms": 662.0585420168936,
+        "questions_per_second": 4.5414369219529505,
+        "prefill_median_ms": 493.1852910085581,
+        "decode_median_ms": 165.90554101276211,
+        "prompt_tokens_median": 361.0,
+        "canvas_tokens_median": 48.0,
+        "peak_memory_gb": 18.056190494
+      },
+      "mixed_2": {
+        "requests": 3,
+        "questions": 9,
+        "correct": 9,
+        "accuracy": 1.0,
+        "wall_p50_ms": 658.8181669940241,
+        "wall_p95_ms": 659.389167005429,
+        "questions_per_second": 4.552314725072859,
+        "prefill_median_ms": 492.2212079982273,
+        "decode_median_ms": 165.39741601445712,
+        "prompt_tokens_median": 361.0,
+        "canvas_tokens_median": 48.0,
+        "peak_memory_gb": 18.056190494
+      },
+      "mixed_3": {
+        "requests": 3,
+        "questions": 9,
+        "correct": 9,
+        "accuracy": 1.0,
+        "wall_p50_ms": 661.1357910151128,
+        "wall_p95_ms": 662.7106250089128,
+        "questions_per_second": 4.536993892758233,
+        "prefill_median_ms": 493.4807490208186,
+        "decode_median_ms": 166.32920803385787,
+        "prompt_tokens_median": 361.0,
+        "canvas_tokens_median": 48.0,
+        "peak_memory_gb": 18.056190494
+      },
+      "mixed_4": {
+        "requests": 3,
+        "questions": 9,
+        "correct": 9,
+        "accuracy": 1.0,
+        "wall_p50_ms": 664.0290420036763,
+        "wall_p95_ms": 667.7012909785844,
+        "questions_per_second": 4.514192999730585,
+        "prefill_median_ms": 494.4627090007998,
+        "decode_median_ms": 167.05087598529644,
+        "prompt_tokens_median": 361.0,
+        "canvas_tokens_median": 48.0,
+        "peak_memory_gb": 18.056190494
+      },
+      "failure_triage": {
+        "requests": 3,
+        "questions": 9,
+        "correct": 9,
+        "accuracy": 1.0,
+        "wall_p50_ms": 728.7621250143275,
+        "wall_p95_ms": 732.770625007106,
+        "questions_per_second": 4.11075367576666,
+        "prefill_median_ms": 560.4382920137141,
+        "decode_median_ms": 166.57041700091213,
+        "prompt_tokens_median": 457.0,
+        "canvas_tokens_median": 48.0,
+        "peak_memory_gb": 18.110014534
+      },
+      "file_selection": {
+        "requests": 3,
+        "questions": 3,
+        "correct": 3,
+        "accuracy": 1.0,
+        "wall_p50_ms": 253.88075000955723,
+        "wall_p95_ms": 253.89174997690134,
+        "questions_per_second": 3.9404745349006083,
+        "prefill_median_ms": 197.11433400516398,
+        "decode_median_ms": 55.73520899633877,
+        "prompt_tokens_median": 178.0,
+        "canvas_tokens_median": 16.0,
+        "peak_memory_gb": 18.131055158
+      },
+      "patch_review": {
+        "requests": 3,
+        "questions": 6,
+        "correct": 6,
+        "accuracy": 1.0,
+        "wall_p50_ms": 500.2579159918241,
+        "wall_p95_ms": 501.5186249802355,
+        "questions_per_second": 3.9957621639410883,
+        "prefill_median_ms": 388.18808301584795,
+        "decode_median_ms": 110.9834169910755,
+        "prompt_tokens_median": 324.0,
+        "canvas_tokens_median": 32.0,
+        "peak_memory_gb": 18.123777094
+      },
+      "context_compaction": {
+        "requests": 3,
+        "questions": 6,
+        "correct": 6,
+        "accuracy": 1.0,
+        "wall_p50_ms": 657.4127500061877,
+        "wall_p95_ms": 661.1045000026934,
+        "questions_per_second": 3.037889828749832,
+        "prefill_median_ms": 543.1513330258895,
+        "decode_median_ms": 112.48304101172835,
+        "prompt_tokens_median": 596.0,
+        "canvas_tokens_median": 32.0,
+        "peak_memory_gb": 18.232488556
+      }
+    }
+  },
+  "projection_equivalence": {
+    "compared_questions": 60,
+    "max_probability_delta": 0.0,
+    "argmax_disagreements": 0,
+    "tolerance": 0.01,
+    "passed": true
+  },
+  "scaling": {
+    "scaling_1": {
+      "requests": 3,
+      "questions": 3,
+      "correct": 3,
+      "accuracy": 1.0,
+      "wall_p50_ms": 226.34616700815968,
+      "wall_p95_ms": 226.3562500011176,
+      "questions_per_second": 4.479377784497714,
+      "prefill_median_ms": 161.76937500131316,
+      "decode_median_ms": 55.263624992221594,
+      "prompt_tokens_median": 101.0,
+      "canvas_tokens_median": 16.0,
+      "peak_memory_gb": 18.01900403
+    },
+    "scaling_4": {
+      "requests": 3,
+      "questions": 12,
+      "correct": 12,
+      "accuracy": 1.0,
+      "wall_p50_ms": 285.5207090033218,
+      "wall_p95_ms": 293.08487501111813,
+      "questions_per_second": 13.89468638211306,
+      "prefill_median_ms": 204.587708984036,
+      "decode_median_ms": 79.76308398065157,
+      "prompt_tokens_median": 191.0,
+      "canvas_tokens_median": 32.0,
+      "peak_memory_gb": 18.176274838
+    },
+    "scaling_8": {
+      "requests": 3,
+      "questions": 24,
+      "correct": 24,
+      "accuracy": 1.0,
+      "wall_p50_ms": 404.548666003393,
+      "wall_p95_ms": 405.0940409942996,
+      "questions_per_second": 19.80028049450265,
+      "prefill_median_ms": 279.7749589954037,
+      "decode_median_ms": 123.58916699304245,
+      "prompt_tokens_median": 311.0,
+      "canvas_tokens_median": 48.0,
+      "peak_memory_gb": 18.25037988
+    },
+    "scaling_16": {
+      "requests": 3,
+      "questions": 48,
+      "correct": 48,
+      "accuracy": 1.0,
+      "wall_p50_ms": 633.8014169887174,
+      "wall_p95_ms": 637.4247079947963,
+      "questions_per_second": 25.212651871196012,
+      "prefill_median_ms": 504.4594589853659,
+      "decode_median_ms": 128.6766249977518,
+      "prompt_tokens_median": 557.0,
+      "canvas_tokens_median": 96.0,
+      "peak_memory_gb": 18.520566
+    },
+    "scaling_32": {
+      "requests": 3,
+      "questions": 96,
+      "correct": 96,
+      "accuracy": 1.0,
+      "wall_p50_ms": 1078.609833988594,
+      "wall_p95_ms": 1086.2570840108674,
+      "questions_per_second": 29.598400950364425,
+      "prefill_median_ms": 866.6046659927815,
+      "decode_median_ms": 208.64845800679177,
+      "prompt_tokens_median": 1053.0,
+      "canvas_tokens_median": 192.0,
+      "peak_memory_gb": 18.683894088
+    }
+  },
+  "measurements": [
+    {
+      "case": "mixed_1",
+      "configuration": "baseline_full_256",
+      "seed": 0,
+      "wall_ms": 471.75441699801013,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 256,
+        "prefill_ms": 211.0975419927854,
+        "decode_ms": 259.8299589881208,
+        "total_ms": 471.7274160066154,
+        "peak_memory_gb": 18.610043398
+      }
+    },
+    {
+      "case": "mixed_1",
+      "configuration": "compact_full",
+      "seed": 0,
+      "wall_ms": 296.14749999018386,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 210.79433397972025,
+        "decode_ms": 84.59495898569003,
+        "total_ms": 296.1227920022793,
+        "peak_memory_gb": 18.157433398
+      }
+    },
+    {
+      "case": "mixed_1",
+      "configuration": "optimized",
+      "seed": 0,
+      "wall_ms": 290.8307090110611,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 210.6452920124866,
+        "decode_ms": 79.42404199275188,
+        "total_ms": 290.80379198421724,
+        "peak_memory_gb": 18.157433398
+      }
+    },
+    {
+      "case": "mixed_1",
+      "configuration": "independent",
+      "seed": 0,
+      "wall_ms": 660.3817910072394,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 361,
+        "questions": 3,
+        "decoder_passes": 3,
+        "canvas_tokens": 48,
+        "prefill_ms": 493.1852910085581,
+        "decode_ms": 165.90554101276211,
+        "total_ms": 660.3531669825315,
+        "peak_memory_gb": 18.056190494
+      }
+    },
+    {
+      "case": "mixed_2",
+      "configuration": "baseline_full_256",
+      "seed": 0,
+      "wall_ms": 471.45212499890476,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 256,
+        "prefill_ms": 210.18129101139493,
+        "decode_ms": 260.4662499797996,
+        "total_ms": 471.425833995454,
+        "peak_memory_gb": 18.610043398
+      }
+    },
+    {
+      "case": "mixed_2",
+      "configuration": "compact_full",
+      "seed": 0,
+      "wall_ms": 294.7758749942295,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 209.86495798570104,
+        "decode_ms": 84.13154099253006,
+        "total_ms": 294.7502919996623,
+        "peak_memory_gb": 18.157433398
+      }
+    },
+    {
+      "case": "mixed_2",
+      "configuration": "optimized",
+      "seed": 0,
+      "wall_ms": 291.2317500158679,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 210.32158299931325,
+        "decode_ms": 80.13570899493061,
+        "total_ms": 291.2085840071086,
+        "peak_memory_gb": 18.157433398
+      }
+    },
+    {
+      "case": "mixed_2",
+      "configuration": "independent",
+      "seed": 0,
+      "wall_ms": 658.8181669940241,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 361,
+        "questions": 3,
+        "decoder_passes": 3,
+        "canvas_tokens": 48,
+        "prefill_ms": 492.21520801074803,
+        "decode_ms": 165.39741601445712,
+        "total_ms": 658.7913750263397,
+        "peak_memory_gb": 18.056190494
+      }
+    },
+    {
+      "case": "mixed_3",
+      "configuration": "baseline_full_256",
+      "seed": 0,
+      "wall_ms": 471.13712498685345,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 256,
+        "prefill_ms": 209.59979100734927,
+        "decode_ms": 260.7708330033347,
+        "total_ms": 471.10924997832626,
+        "peak_memory_gb": 18.610043398
+      }
+    },
+    {
+      "case": "mixed_3",
+      "configuration": "compact_full",
+      "seed": 0,
+      "wall_ms": 295.2365000091959,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 210.1482090074569,
+        "decode_ms": 84.27829199354164,
+        "total_ms": 295.2084999997169,
+        "peak_memory_gb": 18.157433398
+      }
+    },
+    {
+      "case": "mixed_3",
+      "configuration": "optimized",
+      "seed": 0,
+      "wall_ms": 291.2934999912977,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 210.0657080009114,
+        "decode_ms": 80.20174998091534,
+        "total_ms": 291.26591599197127,
+        "peak_memory_gb": 18.157433398
+      }
+    },
+    {
+      "case": "mixed_3",
+      "configuration": "independent",
+      "seed": 0,
+      "wall_ms": 662.7106250089128,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 361,
+        "questions": 3,
+        "decoder_passes": 3,
+        "canvas_tokens": 48,
+        "prefill_ms": 494.60004197317176,
+        "decode_ms": 166.75691699492745,
+        "total_ms": 662.6788330031559,
+        "peak_memory_gb": 18.056190494
+      }
+    },
+    {
+      "case": "mixed_4",
+      "configuration": "baseline_full_256",
+      "seed": 0,
+      "wall_ms": 470.34612501738593,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 256,
+        "prefill_ms": 210.4900410049595,
+        "decode_ms": 259.0321669995319,
+        "total_ms": 470.3208330029156,
+        "peak_memory_gb": 18.610043398
+      }
+    },
+    {
+      "case": "mixed_4",
+      "configuration": "compact_full",
+      "seed": 0,
+      "wall_ms": 293.94699999829754,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 209.47516700834967,
+        "decode_ms": 83.73595800367184,
+        "total_ms": 293.92262498731725,
+        "peak_memory_gb": 18.157433398
+      }
+    },
+    {
+      "case": "mixed_4",
+      "configuration": "optimized",
+      "seed": 0,
+      "wall_ms": 291.3967079948634,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 210.58849999099039,
+        "decode_ms": 80.07183301378973,
+        "total_ms": 291.37249998166226,
+        "peak_memory_gb": 18.157433398
+      }
+    },
+    {
+      "case": "mixed_4",
+      "configuration": "independent",
+      "seed": 0,
+      "wall_ms": 661.9815000158269,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 361,
+        "questions": 3,
+        "decoder_passes": 3,
+        "canvas_tokens": 48,
+        "prefill_ms": 493.91279197880067,
+        "decode_ms": 166.7870000237599,
+        "total_ms": 661.9535000063479,
+        "peak_memory_gb": 18.056190494
+      }
+    },
+    {
+      "case": "failure_triage",
+      "configuration": "baseline_full_256",
+      "seed": 0,
+      "wall_ms": 496.5262920013629,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 229,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 256,
+        "prefill_ms": 234.39550001057796,
+        "decode_ms": 261.2414580071345,
+        "total_ms": 496.4987499988638,
+        "peak_memory_gb": 18.619382266
+      }
+    },
+    {
+      "case": "failure_triage",
+      "configuration": "compact_full",
+      "seed": 0,
+      "wall_ms": 318.32916699931957,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 229,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 233.65870901034214,
+        "decode_ms": 83.78224997431971,
+        "total_ms": 318.30266598262824,
+        "peak_memory_gb": 18.214412742
+      }
+    },
+    {
+      "case": "failure_triage",
+      "configuration": "optimized",
+      "seed": 0,
+      "wall_ms": 314.08862498938106,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 229,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 233.57479201513343,
+        "decode_ms": 79.63212500908412,
+        "total_ms": 314.0636669995729,
+        "peak_memory_gb": 18.214412742
+      }
+    },
+    {
+      "case": "failure_triage",
+      "configuration": "independent",
+      "seed": 0,
+      "wall_ms": 732.770625007106,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 457,
+        "questions": 3,
+        "decoder_passes": 3,
+        "canvas_tokens": 48,
+        "prefill_ms": 564.7847499931231,
+        "decode_ms": 166.57041700091213,
+        "total_ms": 732.7373339794576,
+        "peak_memory_gb": 18.110014534
+      }
+    },
+    {
+      "case": "file_selection",
+      "configuration": "baseline_full_256",
+      "seed": 0,
+      "wall_ms": 455.68716700654477,
+      "correct": 1,
+      "questions": 1,
+      "usage": {
+        "prompt_tokens": 178,
+        "questions": 1,
+        "decoder_passes": 1,
+        "canvas_tokens": 256,
+        "prefill_ms": 196.93345797713846,
+        "decode_ms": 258.06225000997074,
+        "total_ms": 455.65837499452755,
+        "peak_memory_gb": 18.605849042
+      }
+    },
+    {
+      "case": "file_selection",
+      "configuration": "compact_full",
+      "seed": 0,
+      "wall_ms": 258.44674999825656,
+      "correct": 1,
+      "questions": 1,
+      "usage": {
+        "prompt_tokens": 178,
+        "questions": 1,
+        "decoder_passes": 1,
+        "canvas_tokens": 16,
+        "prefill_ms": 197.1568749868311,
+        "decode_ms": 60.54899998707697,
+        "total_ms": 258.4179590048734,
+        "peak_memory_gb": 18.131055158
+      }
+    },
+    {
+      "case": "file_selection",
+      "configuration": "optimized",
+      "seed": 0,
+      "wall_ms": 254.17587501578964,
+      "correct": 1,
+      "questions": 1,
+      "usage": {
+        "prompt_tokens": 178,
+        "questions": 1,
+        "decoder_passes": 1,
+        "canvas_tokens": 16,
+        "prefill_ms": 197.68370801466517,
+        "decode_ms": 55.75600001611747,
+        "total_ms": 254.14725000155158,
+        "peak_memory_gb": 18.131055158
+      }
+    },
+    {
+      "case": "file_selection",
+      "configuration": "independent",
+      "seed": 0,
+      "wall_ms": 253.5571250191424,
+      "correct": 1,
+      "questions": 1,
+      "usage": {
+        "prompt_tokens": 178,
+        "questions": 1,
+        "decoder_passes": 1,
+        "canvas_tokens": 16,
+        "prefill_ms": 197.11433400516398,
+        "decode_ms": 55.73520899633877,
+        "total_ms": 253.52933298563585,
+        "peak_memory_gb": 18.131055158
+      }
+    },
+    {
+      "case": "patch_review",
+      "configuration": "baseline_full_256",
+      "seed": 0,
+      "wall_ms": 476.40137499547563,
+      "correct": 2,
+      "questions": 2,
+      "usage": {
+        "prompt_tokens": 200,
+        "questions": 2,
+        "decoder_passes": 1,
+        "canvas_tokens": 256,
+        "prefill_ms": 213.85466598439962,
+        "decode_ms": 261.66829199064523,
+        "total_ms": 476.3741249917075,
+        "peak_memory_gb": 18.611239406
+      }
+    },
+    {
+      "case": "patch_review",
+      "configuration": "compact_full",
+      "seed": 0,
+      "wall_ms": 275.2515409956686,
+      "correct": 2,
+      "questions": 2,
+      "usage": {
+        "prompt_tokens": 200,
+        "questions": 2,
+        "decoder_passes": 1,
+        "canvas_tokens": 16,
+        "prefill_ms": 212.87354198284447,
+        "decode_ms": 61.55629098066129,
+        "total_ms": 275.22554202005267,
+        "peak_memory_gb": 18.168728134
+      }
+    },
+    {
+      "case": "patch_review",
+      "configuration": "optimized",
+      "seed": 0,
+      "wall_ms": 269.19937500497326,
+      "correct": 2,
+      "questions": 2,
+      "usage": {
+        "prompt_tokens": 200,
+        "questions": 2,
+        "decoder_passes": 1,
+        "canvas_tokens": 16,
+        "prefill_ms": 212.13008399354294,
+        "decode_ms": 56.26316700363532,
+        "total_ms": 269.17629200033844,
+        "peak_memory_gb": 18.168728134
+      }
+    },
+    {
+      "case": "patch_review",
+      "configuration": "independent",
+      "seed": 0,
+      "wall_ms": 499.81433301582,
+      "correct": 2,
+      "questions": 2,
+      "usage": {
+        "prompt_tokens": 324,
+        "questions": 2,
+        "decoder_passes": 2,
+        "canvas_tokens": 32,
+        "prefill_ms": 388.18808301584795,
+        "decode_ms": 110.57749998872168,
+        "total_ms": 499.78316700435244,
+        "peak_memory_gb": 18.123777094
+      }
+    },
+    {
+      "case": "context_compaction",
+      "configuration": "baseline_full_256",
+      "seed": 0,
+      "wall_ms": 561.5380000090227,
+      "correct": 2,
+      "questions": 2,
+      "usage": {
+        "prompt_tokens": 341,
+        "questions": 2,
+        "decoder_passes": 1,
+        "canvas_tokens": 256,
+        "prefill_ms": 300.14974999357946,
+        "decode_ms": 260.5023749929387,
+        "total_ms": 561.5078339760657,
+        "peak_memory_gb": 18.65444399
+      }
+    },
+    {
+      "case": "context_compaction",
+      "configuration": "compact_full",
+      "seed": 0,
+      "wall_ms": 362.1393750072457,
+      "correct": 2,
+      "questions": 2,
+      "usage": {
+        "prompt_tokens": 341,
+        "questions": 2,
+        "decoder_passes": 1,
+        "canvas_tokens": 16,
+        "prefill_ms": 299.6346660074778,
+        "decode_ms": 61.59387499792501,
+        "total_ms": 362.1110829990357,
+        "peak_memory_gb": 18.29976126
+      }
+    },
+    {
+      "case": "context_compaction",
+      "configuration": "optimized",
+      "seed": 0,
+      "wall_ms": 358.5432500112802,
+      "correct": 2,
+      "questions": 2,
+      "usage": {
+        "prompt_tokens": 341,
+        "questions": 2,
+        "decoder_passes": 1,
+        "canvas_tokens": 16,
+        "prefill_ms": 300.3878750023432,
+        "decode_ms": 57.24679201375693,
+        "total_ms": 358.51420802646317,
+        "peak_memory_gb": 18.29976126
+      }
+    },
+    {
+      "case": "context_compaction",
+      "configuration": "independent",
+      "seed": 0,
+      "wall_ms": 661.1045000026934,
+      "correct": 2,
+      "questions": 2,
+      "usage": {
+        "prompt_tokens": 596,
+        "questions": 2,
+        "decoder_passes": 2,
+        "canvas_tokens": 32,
+        "prefill_ms": 543.1513330258895,
+        "decode_ms": 116.66779202641919,
+        "total_ms": 661.0733339912258,
+        "peak_memory_gb": 18.232488556
+      }
+    },
+    {
+      "case": "mixed_1",
+      "configuration": "baseline_full_256",
+      "seed": 1,
+      "wall_ms": 472.9281670006458,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 256,
+        "prefill_ms": 211.59350001835264,
+        "decode_ms": 260.5254999944009,
+        "total_ms": 472.9007499990985,
+        "peak_memory_gb": 18.610043398
+      }
+    },
+    {
+      "case": "mixed_1",
+      "configuration": "independent",
+      "seed": 1,
+      "wall_ms": 662.0585420168936,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 361,
+        "questions": 3,
+        "decoder_passes": 3,
+        "canvas_tokens": 48,
+        "prefill_ms": 494.6133340126835,
+        "decode_ms": 166.1303750006482,
+        "total_ms": 662.0224170037545,
+        "peak_memory_gb": 18.056190494
+      }
+    },
+    {
+      "case": "mixed_1",
+      "configuration": "optimized",
+      "seed": 1,
+      "wall_ms": 291.52175001217984,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 211.05524999438785,
+        "decode_ms": 79.67016700422391,
+        "total_ms": 291.49649999453686,
+        "peak_memory_gb": 18.157433398
+      }
+    },
+    {
+      "case": "mixed_1",
+      "configuration": "compact_full",
+      "seed": 1,
+      "wall_ms": 303.1895410094876,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 210.27358301216736,
+        "decode_ms": 92.16050000395626,
+        "total_ms": 303.16529198898934,
+        "peak_memory_gb": 18.157433398
+      }
+    },
+    {
+      "case": "mixed_2",
+      "configuration": "baseline_full_256",
+      "seed": 1,
+      "wall_ms": 471.7486249865033,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 256,
+        "prefill_ms": 210.71645797928795,
+        "decode_ms": 260.252332984237,
+        "total_ms": 471.72191701247357,
+        "peak_memory_gb": 18.610043398
+      }
+    },
+    {
+      "case": "mixed_2",
+      "configuration": "independent",
+      "seed": 1,
+      "wall_ms": 659.389167005429,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 361,
+        "questions": 3,
+        "decoder_passes": 3,
+        "canvas_tokens": 48,
+        "prefill_ms": 492.2212079982273,
+        "decode_ms": 165.64191598445177,
+        "total_ms": 659.3609999981709,
+        "peak_memory_gb": 18.056190494
+      }
+    },
+    {
+      "case": "mixed_2",
+      "configuration": "optimized",
+      "seed": 1,
+      "wall_ms": 289.92354101501405,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 210.16441701794975,
+        "decode_ms": 79.01920800213702,
+        "total_ms": 289.89829201600514,
+        "peak_memory_gb": 18.157433398
+      }
+    },
+    {
+      "case": "mixed_2",
+      "configuration": "compact_full",
+      "seed": 1,
+      "wall_ms": 298.59583399957046,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 210.3752910043113,
+        "decode_ms": 87.48325001215562,
+        "total_ms": 298.5712079971563,
+        "peak_memory_gb": 18.157433398
+      }
+    },
+    {
+      "case": "mixed_3",
+      "configuration": "baseline_full_256",
+      "seed": 1,
+      "wall_ms": 472.02945899334736,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 256,
+        "prefill_ms": 210.57112500420772,
+        "decode_ms": 260.7086669886485,
+        "total_ms": 472.00204100226983,
+        "peak_memory_gb": 18.610043398
+      }
+    },
+    {
+      "case": "mixed_3",
+      "configuration": "independent",
+      "seed": 1,
+      "wall_ms": 659.8459169908892,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 361,
+        "questions": 3,
+        "decoder_passes": 3,
+        "canvas_tokens": 48,
+        "prefill_ms": 492.6872509822715,
+        "decode_ms": 165.90149997500703,
+        "total_ms": 659.8174159880728,
+        "peak_memory_gb": 18.056190494
+      }
+    },
+    {
+      "case": "mixed_3",
+      "configuration": "optimized",
+      "seed": 1,
+      "wall_ms": 290.46587500488386,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 209.94137501111254,
+        "decode_ms": 79.74279200425372,
+        "total_ms": 290.4413329961244,
+        "peak_memory_gb": 18.157433398
+      }
+    },
+    {
+      "case": "mixed_3",
+      "configuration": "compact_full",
+      "seed": 1,
+      "wall_ms": 295.0690419820603,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 210.4414580098819,
+        "decode_ms": 83.86212500045076,
+        "total_ms": 295.04458300652914,
+        "peak_memory_gb": 18.157433398
+      }
+    },
+    {
+      "case": "mixed_4",
+      "configuration": "baseline_full_256",
+      "seed": 1,
+      "wall_ms": 472.1525839995593,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 256,
+        "prefill_ms": 210.70412499830127,
+        "decode_ms": 260.6933329952881,
+        "total_ms": 472.12612500879914,
+        "peak_memory_gb": 18.610043398
+      }
+    },
+    {
+      "case": "mixed_4",
+      "configuration": "independent",
+      "seed": 1,
+      "wall_ms": 664.0290420036763,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 361,
+        "questions": 3,
+        "decoder_passes": 3,
+        "canvas_tokens": 48,
+        "prefill_ms": 495.6829999864567,
+        "decode_ms": 167.05087598529644,
+        "total_ms": 663.9940839959309,
+        "peak_memory_gb": 18.056190494
+      }
+    },
+    {
+      "case": "mixed_4",
+      "configuration": "optimized",
+      "seed": 1,
+      "wall_ms": 290.6720419996418,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 210.07425000425428,
+        "decode_ms": 79.77504099835642,
+        "total_ms": 290.6455410120543,
+        "peak_memory_gb": 18.157433398
+      }
+    },
+    {
+      "case": "mixed_4",
+      "configuration": "compact_full",
+      "seed": 1,
+      "wall_ms": 310.7540000055451,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 209.57087498391047,
+        "decode_ms": 100.36775001208298,
+        "total_ms": 310.7269169995561,
+        "peak_memory_gb": 18.157433398
+      }
+    },
+    {
+      "case": "failure_triage",
+      "configuration": "baseline_full_256",
+      "seed": 1,
+      "wall_ms": 495.0097499822732,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 229,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 256,
+        "prefill_ms": 233.9237500273157,
+        "decode_ms": 260.20058398717083,
+        "total_ms": 494.9824590003118,
+        "peak_memory_gb": 18.619382266
+      }
+    },
+    {
+      "case": "failure_triage",
+      "configuration": "independent",
+      "seed": 1,
+      "wall_ms": 727.8467919968534,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 457,
+        "questions": 3,
+        "decoder_passes": 3,
+        "canvas_tokens": 48,
+        "prefill_ms": 559.9291670077946,
+        "decode_ms": 166.48225000244565,
+        "total_ms": 727.8163750015665,
+        "peak_memory_gb": 18.110014534
+      }
+    },
+    {
+      "case": "failure_triage",
+      "configuration": "optimized",
+      "seed": 1,
+      "wall_ms": 313.03425002261065,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 229,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 232.63487499207258,
+        "decode_ms": 79.57141700899228,
+        "total_ms": 313.0093750078231,
+        "peak_memory_gb": 18.214412742
+      }
+    },
+    {
+      "case": "failure_triage",
+      "configuration": "compact_full",
+      "seed": 1,
+      "wall_ms": 317.9340409988072,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 229,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 233.3636670082342,
+        "decode_ms": 83.7442500051111,
+        "total_ms": 317.90945801185444,
+        "peak_memory_gb": 18.214412742
+      }
+    },
+    {
+      "case": "file_selection",
+      "configuration": "baseline_full_256",
+      "seed": 1,
+      "wall_ms": 458.26137499534525,
+      "correct": 1,
+      "questions": 1,
+      "usage": {
+        "prompt_tokens": 178,
+        "questions": 1,
+        "decoder_passes": 1,
+        "canvas_tokens": 256,
+        "prefill_ms": 197.71745800971985,
+        "decode_ms": 259.85529099125415,
+        "total_ms": 458.23258301243186,
+        "peak_memory_gb": 18.605849042
+      }
+    },
+    {
+      "case": "file_selection",
+      "configuration": "independent",
+      "seed": 1,
+      "wall_ms": 253.88075000955723,
+      "correct": 1,
+      "questions": 1,
+      "usage": {
+        "prompt_tokens": 178,
+        "questions": 1,
+        "decoder_passes": 1,
+        "canvas_tokens": 16,
+        "prefill_ms": 197.5270830153022,
+        "decode_ms": 55.56887501734309,
+        "total_ms": 253.85029200697318,
+        "peak_memory_gb": 18.131055158
+      }
+    },
+    {
+      "case": "file_selection",
+      "configuration": "optimized",
+      "seed": 1,
+      "wall_ms": 254.58237499697134,
+      "correct": 1,
+      "questions": 1,
+      "usage": {
+        "prompt_tokens": 178,
+        "questions": 1,
+        "decoder_passes": 1,
+        "canvas_tokens": 16,
+        "prefill_ms": 197.7362500037998,
+        "decode_ms": 56.08183299773373,
+        "total_ms": 254.54662498668768,
+        "peak_memory_gb": 18.131055158
+      }
+    },
+    {
+      "case": "file_selection",
+      "configuration": "compact_full",
+      "seed": 1,
+      "wall_ms": 257.2836249892134,
+      "correct": 1,
+      "questions": 1,
+      "usage": {
+        "prompt_tokens": 178,
+        "questions": 1,
+        "decoder_passes": 1,
+        "canvas_tokens": 16,
+        "prefill_ms": 196.14537499728613,
+        "decode_ms": 60.38958401768468,
+        "total_ms": 257.2532080230303,
+        "peak_memory_gb": 18.131055158
+      }
+    },
+    {
+      "case": "patch_review",
+      "configuration": "baseline_full_256",
+      "seed": 1,
+      "wall_ms": 476.6779580095317,
+      "correct": 2,
+      "questions": 2,
+      "usage": {
+        "prompt_tokens": 200,
+        "questions": 2,
+        "decoder_passes": 1,
+        "canvas_tokens": 256,
+        "prefill_ms": 213.58408400556073,
+        "decode_ms": 262.2325000120327,
+        "total_ms": 476.6515840019565,
+        "peak_memory_gb": 18.611239406
+      }
+    },
+    {
+      "case": "patch_review",
+      "configuration": "independent",
+      "seed": 1,
+      "wall_ms": 500.2579159918241,
+      "correct": 2,
+      "questions": 2,
+      "usage": {
+        "prompt_tokens": 324,
+        "questions": 2,
+        "decoder_passes": 2,
+        "canvas_tokens": 32,
+        "prefill_ms": 388.03900001221336,
+        "decode_ms": 111.12408398184925,
+        "total_ms": 500.2311249845661,
+        "peak_memory_gb": 18.123777094
+      }
+    },
+    {
+      "case": "patch_review",
+      "configuration": "optimized",
+      "seed": 1,
+      "wall_ms": 269.4518330099527,
+      "correct": 2,
+      "questions": 2,
+      "usage": {
+        "prompt_tokens": 200,
+        "questions": 2,
+        "decoder_passes": 1,
+        "canvas_tokens": 16,
+        "prefill_ms": 212.38212499883957,
+        "decode_ms": 56.28000001888722,
+        "total_ms": 269.42674999008887,
+        "peak_memory_gb": 18.168728134
+      }
+    },
+    {
+      "case": "patch_review",
+      "configuration": "compact_full",
+      "seed": 1,
+      "wall_ms": 275.3096249944065,
+      "correct": 2,
+      "questions": 2,
+      "usage": {
+        "prompt_tokens": 200,
+        "questions": 2,
+        "decoder_passes": 1,
+        "canvas_tokens": 16,
+        "prefill_ms": 212.65962498728186,
+        "decode_ms": 61.8561249866616,
+        "total_ms": 275.28183299000375,
+        "peak_memory_gb": 18.168728134
+      }
+    },
+    {
+      "case": "context_compaction",
+      "configuration": "baseline_full_256",
+      "seed": 1,
+      "wall_ms": 562.8673329774756,
+      "correct": 2,
+      "questions": 2,
+      "usage": {
+        "prompt_tokens": 341,
+        "questions": 2,
+        "decoder_passes": 1,
+        "canvas_tokens": 256,
+        "prefill_ms": 301.404541998636,
+        "decode_ms": 260.5231250054203,
+        "total_ms": 562.8283749974798,
+        "peak_memory_gb": 18.65444399
+      }
+    },
+    {
+      "case": "context_compaction",
+      "configuration": "independent",
+      "seed": 1,
+      "wall_ms": 656.5379159874283,
+      "correct": 2,
+      "questions": 2,
+      "usage": {
+        "prompt_tokens": 596,
+        "questions": 2,
+        "decoder_passes": 2,
+        "canvas_tokens": 32,
+        "prefill_ms": 543.0062919913325,
+        "decode_ms": 112.23033303394914,
+        "total_ms": 656.5058749984019,
+        "peak_memory_gb": 18.232488556
+      }
+    },
+    {
+      "case": "context_compaction",
+      "configuration": "optimized",
+      "seed": 1,
+      "wall_ms": 357.7396670007147,
+      "correct": 2,
+      "questions": 2,
+      "usage": {
+        "prompt_tokens": 341,
+        "questions": 2,
+        "decoder_passes": 1,
+        "canvas_tokens": 16,
+        "prefill_ms": 300.0184170086868,
+        "decode_ms": 56.853000016417354,
+        "total_ms": 357.7117079985328,
+        "peak_memory_gb": 18.29976126
+      }
+    },
+    {
+      "case": "context_compaction",
+      "configuration": "compact_full",
+      "seed": 1,
+      "wall_ms": 362.544292001985,
+      "correct": 2,
+      "questions": 2,
+      "usage": {
+        "prompt_tokens": 341,
+        "questions": 2,
+        "decoder_passes": 1,
+        "canvas_tokens": 16,
+        "prefill_ms": 300.44233400258236,
+        "decode_ms": 61.24495901167393,
+        "total_ms": 362.51754200202413,
+        "peak_memory_gb": 18.29976126
+      }
+    },
+    {
+      "case": "mixed_1",
+      "configuration": "optimized",
+      "seed": 2,
+      "wall_ms": 290.4976250138134,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 210.11304098647088,
+        "decode_ms": 79.38275000196882,
+        "total_ms": 290.47050001099706,
+        "peak_memory_gb": 18.157433398
+      }
+    },
+    {
+      "case": "mixed_1",
+      "configuration": "independent",
+      "seed": 2,
+      "wall_ms": 659.311291994527,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 361,
+        "questions": 3,
+        "decoder_passes": 3,
+        "canvas_tokens": 48,
+        "prefill_ms": 492.5563339784276,
+        "decode_ms": 165.52824998507276,
+        "total_ms": 659.2826250125654,
+        "peak_memory_gb": 18.056190494
+      }
+    },
+    {
+      "case": "mixed_1",
+      "configuration": "baseline_full_256",
+      "seed": 2,
+      "wall_ms": 471.5861250006128,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 256,
+        "prefill_ms": 210.93895798549056,
+        "decode_ms": 259.86854199436493,
+        "total_ms": 471.5594580047764,
+        "peak_memory_gb": 18.610043398
+      }
+    },
+    {
+      "case": "mixed_1",
+      "configuration": "compact_full",
+      "seed": 2,
+      "wall_ms": 295.4692499770317,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 210.6969169981312,
+        "decode_ms": 83.96837502368726,
+        "total_ms": 295.43275001924485,
+        "peak_memory_gb": 18.157433398
+      }
+    },
+    {
+      "case": "mixed_2",
+      "configuration": "optimized",
+      "seed": 2,
+      "wall_ms": 291.4984580129385,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 211.057417007396,
+        "decode_ms": 79.65400000102818,
+        "total_ms": 291.47245798958465,
+        "peak_memory_gb": 18.157433398
+      }
+    },
+    {
+      "case": "mixed_2",
+      "configuration": "independent",
+      "seed": 2,
+      "wall_ms": 658.8088750140741,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 361,
+        "questions": 3,
+        "decoder_passes": 3,
+        "canvas_tokens": 48,
+        "prefill_ms": 492.6817499799654,
+        "decode_ms": 164.9102910014335,
+        "total_ms": 658.7803330039605,
+        "peak_memory_gb": 18.056190494
+      }
+    },
+    {
+      "case": "mixed_2",
+      "configuration": "baseline_full_256",
+      "seed": 2,
+      "wall_ms": 469.5329579990357,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 256,
+        "prefill_ms": 209.52970799407922,
+        "decode_ms": 259.24341700738296,
+        "total_ms": 469.50579099939205,
+        "peak_memory_gb": 18.610043398
+      }
+    },
+    {
+      "case": "mixed_2",
+      "configuration": "compact_full",
+      "seed": 2,
+      "wall_ms": 295.0538750155829,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 210.184166993713,
+        "decode_ms": 84.07091698609293,
+        "total_ms": 295.0255830073729,
+        "peak_memory_gb": 18.157433398
+      }
+    },
+    {
+      "case": "mixed_3",
+      "configuration": "optimized",
+      "seed": 2,
+      "wall_ms": 290.46312501304783,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 209.90304197766818,
+        "decode_ms": 79.75341699784622,
+        "total_ms": 290.4357090010308,
+        "peak_memory_gb": 18.157433398
+      }
+    },
+    {
+      "case": "mixed_3",
+      "configuration": "independent",
+      "seed": 2,
+      "wall_ms": 661.1357910151128,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 361,
+        "questions": 3,
+        "decoder_passes": 3,
+        "canvas_tokens": 48,
+        "prefill_ms": 493.4807490208186,
+        "decode_ms": 166.32920803385787,
+        "total_ms": 661.1034169909544,
+        "peak_memory_gb": 18.056190494
+      }
+    },
+    {
+      "case": "mixed_3",
+      "configuration": "baseline_full_256",
+      "seed": 2,
+      "wall_ms": 487.77612499543466,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 256,
+        "prefill_ms": 211.01666599861346,
+        "decode_ms": 275.9274580166675,
+        "total_ms": 487.7426660095807,
+        "peak_memory_gb": 18.610043398
+      }
+    },
+    {
+      "case": "mixed_3",
+      "configuration": "compact_full",
+      "seed": 2,
+      "wall_ms": 296.2978339928668,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 211.44549999735318,
+        "decode_ms": 83.86070799315348,
+        "total_ms": 296.27362499013543,
+        "peak_memory_gb": 18.157433398
+      }
+    },
+    {
+      "case": "mixed_4",
+      "configuration": "optimized",
+      "seed": 2,
+      "wall_ms": 289.96904200175777,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 209.7322919871658,
+        "decode_ms": 79.51608399162069,
+        "total_ms": 289.9455000006128,
+        "peak_memory_gb": 18.157433398
+      }
+    },
+    {
+      "case": "mixed_4",
+      "configuration": "independent",
+      "seed": 2,
+      "wall_ms": 667.7012909785844,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 361,
+        "questions": 3,
+        "decoder_passes": 3,
+        "canvas_tokens": 48,
+        "prefill_ms": 494.4627090007998,
+        "decode_ms": 171.98720900341868,
+        "total_ms": 667.6709160092287,
+        "peak_memory_gb": 18.056190494
+      }
+    },
+    {
+      "case": "mixed_4",
+      "configuration": "baseline_full_256",
+      "seed": 2,
+      "wall_ms": 471.66908299550414,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 256,
+        "prefill_ms": 210.59854101622477,
+        "decode_ms": 260.2746660122648,
+        "total_ms": 471.64262499427423,
+        "peak_memory_gb": 18.610043398
+      }
+    },
+    {
+      "case": "mixed_4",
+      "configuration": "compact_full",
+      "seed": 2,
+      "wall_ms": 295.1035420119297,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 193,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 210.1708749833051,
+        "decode_ms": 84.13991698762402,
+        "total_ms": 295.07733398349956,
+        "peak_memory_gb": 18.157433398
+      }
+    },
+    {
+      "case": "failure_triage",
+      "configuration": "optimized",
+      "seed": 2,
+      "wall_ms": 314.0854589873925,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 229,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 233.5836670245044,
+        "decode_ms": 79.59970799856819,
+        "total_ms": 314.0588329988532,
+        "peak_memory_gb": 18.214412742
+      }
+    },
+    {
+      "case": "failure_triage",
+      "configuration": "independent",
+      "seed": 2,
+      "wall_ms": 728.7621250143275,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 457,
+        "questions": 3,
+        "decoder_passes": 3,
+        "canvas_tokens": 48,
+        "prefill_ms": 560.4382920137141,
+        "decode_ms": 166.8971259787213,
+        "total_ms": 728.730375005398,
+        "peak_memory_gb": 18.110014534
+      }
+    },
+    {
+      "case": "failure_triage",
+      "configuration": "baseline_full_256",
+      "seed": 2,
+      "wall_ms": 494.0799580072053,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 229,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 256,
+        "prefill_ms": 232.95233302633278,
+        "decode_ms": 260.24637499358505,
+        "total_ms": 494.0444169915281,
+        "peak_memory_gb": 18.619382266
+      }
+    },
+    {
+      "case": "failure_triage",
+      "configuration": "compact_full",
+      "seed": 2,
+      "wall_ms": 319.6002079930622,
+      "correct": 3,
+      "questions": 3,
+      "usage": {
+        "prompt_tokens": 229,
+        "questions": 3,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 234.2754999990575,
+        "decode_ms": 84.23195799696259,
+        "total_ms": 319.56608401378617,
+        "peak_memory_gb": 18.214412742
+      }
+    },
+    {
+      "case": "file_selection",
+      "configuration": "optimized",
+      "seed": 2,
+      "wall_ms": 256.492167012766,
+      "correct": 1,
+      "questions": 1,
+      "usage": {
+        "prompt_tokens": 178,
+        "questions": 1,
+        "decoder_passes": 1,
+        "canvas_tokens": 16,
+        "prefill_ms": 199.1242499789223,
+        "decode_ms": 56.61345898988657,
+        "total_ms": 256.4664169913158,
+        "peak_memory_gb": 18.131055158
+      }
+    },
+    {
+      "case": "file_selection",
+      "configuration": "independent",
+      "seed": 2,
+      "wall_ms": 253.89174997690134,
+      "correct": 1,
+      "questions": 1,
+      "usage": {
+        "prompt_tokens": 178,
+        "questions": 1,
+        "decoder_passes": 1,
+        "canvas_tokens": 16,
+        "prefill_ms": 196.06625000596978,
+        "decode_ms": 57.03841699869372,
+        "total_ms": 253.86462500318885,
+        "peak_memory_gb": 18.131055158
+      }
+    },
+    {
+      "case": "file_selection",
+      "configuration": "baseline_full_256",
+      "seed": 2,
+      "wall_ms": 485.4794580023736,
+      "correct": 1,
+      "questions": 1,
+      "usage": {
+        "prompt_tokens": 178,
+        "questions": 1,
+        "decoder_passes": 1,
+        "canvas_tokens": 256,
+        "prefill_ms": 202.0851249981206,
+        "decode_ms": 282.5906249927357,
+        "total_ms": 485.44779198709875,
+        "peak_memory_gb": 18.605849042
+      }
+    },
+    {
+      "case": "file_selection",
+      "configuration": "compact_full",
+      "seed": 2,
+      "wall_ms": 292.0809999923222,
+      "correct": 1,
+      "questions": 1,
+      "usage": {
+        "prompt_tokens": 178,
+        "questions": 1,
+        "decoder_passes": 1,
+        "canvas_tokens": 16,
+        "prefill_ms": 203.08029098669067,
+        "decode_ms": 88.22054098709486,
+        "total_ms": 292.050082993228,
+        "peak_memory_gb": 18.131055158
+      }
+    },
+    {
+      "case": "patch_review",
+      "configuration": "optimized",
+      "seed": 2,
+      "wall_ms": 272.8484999970533,
+      "correct": 2,
+      "questions": 2,
+      "usage": {
+        "prompt_tokens": 200,
+        "questions": 2,
+        "decoder_passes": 1,
+        "canvas_tokens": 16,
+        "prefill_ms": 214.9795000150334,
+        "decode_ms": 57.00070800958201,
+        "total_ms": 272.82291700248607,
+        "peak_memory_gb": 18.168728134
+      }
+    },
+    {
+      "case": "patch_review",
+      "configuration": "independent",
+      "seed": 2,
+      "wall_ms": 501.5186249802355,
+      "correct": 2,
+      "questions": 2,
+      "usage": {
+        "prompt_tokens": 324,
+        "questions": 2,
+        "decoder_passes": 2,
+        "canvas_tokens": 32,
+        "prefill_ms": 389.1413319797721,
+        "decode_ms": 110.9834169910755,
+        "total_ms": 501.490708993515,
+        "peak_memory_gb": 18.123777094
+      }
+    },
+    {
+      "case": "patch_review",
+      "configuration": "baseline_full_256",
+      "seed": 2,
+      "wall_ms": 475.6091669842135,
+      "correct": 2,
+      "questions": 2,
+      "usage": {
+        "prompt_tokens": 200,
+        "questions": 2,
+        "decoder_passes": 1,
+        "canvas_tokens": 256,
+        "prefill_ms": 212.8639589936938,
+        "decode_ms": 261.91895798547193,
+        "total_ms": 475.5816670076456,
+        "peak_memory_gb": 18.611239406
+      }
+    },
+    {
+      "case": "patch_review",
+      "configuration": "compact_full",
+      "seed": 2,
+      "wall_ms": 287.73408400593325,
+      "correct": 2,
+      "questions": 2,
+      "usage": {
+        "prompt_tokens": 200,
+        "questions": 2,
+        "decoder_passes": 1,
+        "canvas_tokens": 16,
+        "prefill_ms": 212.7043340005912,
+        "decode_ms": 74.19116699020378,
+        "total_ms": 287.7070420072414,
+        "peak_memory_gb": 18.168728134
+      }
+    },
+    {
+      "case": "context_compaction",
+      "configuration": "optimized",
+      "seed": 2,
+      "wall_ms": 358.63470801268704,
+      "correct": 2,
+      "questions": 2,
+      "usage": {
+        "prompt_tokens": 341,
+        "questions": 2,
+        "decoder_passes": 1,
+        "canvas_tokens": 16,
+        "prefill_ms": 300.5879169795662,
+        "decode_ms": 57.150542008457705,
+        "total_ms": 358.60470798797905,
+        "peak_memory_gb": 18.29976126
+      }
+    },
+    {
+      "case": "context_compaction",
+      "configuration": "independent",
+      "seed": 2,
+      "wall_ms": 657.4127500061877,
+      "correct": 2,
+      "questions": 2,
+      "usage": {
+        "prompt_tokens": 596,
+        "questions": 2,
+        "decoder_passes": 2,
+        "canvas_tokens": 32,
+        "prefill_ms": 543.5538329766132,
+        "decode_ms": 112.48304101172835,
+        "total_ms": 657.3805420193821,
+        "peak_memory_gb": 18.232488556
+      }
+    },
+    {
+      "case": "context_compaction",
+      "configuration": "baseline_full_256",
+      "seed": 2,
+      "wall_ms": 561.4950829767622,
+      "correct": 2,
+      "questions": 2,
+      "usage": {
+        "prompt_tokens": 341,
+        "questions": 2,
+        "decoder_passes": 1,
+        "canvas_tokens": 256,
+        "prefill_ms": 299.58683301811107,
+        "decode_ms": 261.0094580159057,
+        "total_ms": 561.4676249970216,
+        "peak_memory_gb": 18.65444399
+      }
+    },
+    {
+      "case": "context_compaction",
+      "configuration": "compact_full",
+      "seed": 2,
+      "wall_ms": 362.42283301544376,
+      "correct": 2,
+      "questions": 2,
+      "usage": {
+        "prompt_tokens": 341,
+        "questions": 2,
+        "decoder_passes": 1,
+        "canvas_tokens": 16,
+        "prefill_ms": 300.1962080015801,
+        "decode_ms": 61.35212499066256,
+        "total_ms": 362.3951670015231,
+        "peak_memory_gb": 18.29976126
+      }
+    },
+    {
+      "case": "scaling_1",
+      "configuration": "optimized",
+      "seed": 0,
+      "wall_ms": 226.34616700815968,
+      "correct": 1,
+      "questions": 1,
+      "usage": {
+        "prompt_tokens": 101,
+        "questions": 1,
+        "decoder_passes": 1,
+        "canvas_tokens": 16,
+        "prefill_ms": 170.46362499240786,
+        "decode_ms": 55.263624992221594,
+        "total_ms": 226.31770899170078,
+        "peak_memory_gb": 18.01900403
+      }
+    },
+    {
+      "case": "scaling_4",
+      "configuration": "optimized",
+      "seed": 0,
+      "wall_ms": 285.5207090033218,
+      "correct": 4,
+      "questions": 4,
+      "usage": {
+        "prompt_tokens": 191,
+        "questions": 4,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 205.00687501044013,
+        "decode_ms": 79.68399999663234,
+        "total_ms": 285.49291600938886,
+        "peak_memory_gb": 18.176274838
+      }
+    },
+    {
+      "case": "scaling_8",
+      "configuration": "optimized",
+      "seed": 0,
+      "wall_ms": 405.0940409942996,
+      "correct": 8,
+      "questions": 8,
+      "usage": {
+        "prompt_tokens": 311,
+        "questions": 8,
+        "decoder_passes": 1,
+        "canvas_tokens": 48,
+        "prefill_ms": 280.51950002554804,
+        "decode_ms": 123.58916699304245,
+        "total_ms": 405.05262502119876,
+        "peak_memory_gb": 18.25037988
+      }
+    },
+    {
+      "case": "scaling_16",
+      "configuration": "optimized",
+      "seed": 0,
+      "wall_ms": 637.4247079947963,
+      "correct": 16,
+      "questions": 16,
+      "usage": {
+        "prompt_tokens": 557,
+        "questions": 16,
+        "decoder_passes": 1,
+        "canvas_tokens": 96,
+        "prefill_ms": 505.5310419993475,
+        "decode_ms": 130.15233300393447,
+        "total_ms": 637.3832499957643,
+        "peak_memory_gb": 18.520566
+      }
+    },
+    {
+      "case": "scaling_32",
+      "configuration": "optimized",
+      "seed": 0,
+      "wall_ms": 1086.2570840108674,
+      "correct": 32,
+      "questions": 32,
+      "usage": {
+        "prompt_tokens": 1053,
+        "questions": 32,
+        "decoder_passes": 1,
+        "canvas_tokens": 192,
+        "prefill_ms": 866.6046659927815,
+        "decode_ms": 211.8452499853447,
+        "total_ms": 1086.2060830113478,
+        "peak_memory_gb": 18.683894088
+      }
+    },
+    {
+      "case": "scaling_32",
+      "configuration": "optimized",
+      "seed": 1,
+      "wall_ms": 1078.5515410243534,
+      "correct": 32,
+      "questions": 32,
+      "usage": {
+        "prompt_tokens": 1053,
+        "questions": 32,
+        "decoder_passes": 1,
+        "canvas_tokens": 192,
+        "prefill_ms": 867.0685419929214,
+        "decode_ms": 207.3421670065727,
+        "total_ms": 1078.5022909985855,
+        "peak_memory_gb": 18.683894088
+      }
+    },
+    {
+      "case": "scaling_16",
+      "configuration": "optimized",
+      "seed": 1,
+      "wall_ms": 632.5799579790328,
+      "correct": 16,
+      "questions": 16,
+      "usage": {
+        "prompt_tokens": 557,
+        "questions": 16,
+        "decoder_passes": 1,
+        "canvas_tokens": 96,
+        "prefill_ms": 502.2980830108281,
+        "decode_ms": 128.6766249977518,
+        "total_ms": 632.5377089960966,
+        "peak_memory_gb": 18.520566
+      }
+    },
+    {
+      "case": "scaling_8",
+      "configuration": "optimized",
+      "seed": 1,
+      "wall_ms": 404.548666003393,
+      "correct": 8,
+      "questions": 8,
+      "usage": {
+        "prompt_tokens": 311,
+        "questions": 8,
+        "decoder_passes": 1,
+        "canvas_tokens": 48,
+        "prefill_ms": 279.7749589954037,
+        "decode_ms": 123.82716700085439,
+        "total_ms": 404.5184999995399,
+        "peak_memory_gb": 18.25037988
+      }
+    },
+    {
+      "case": "scaling_4",
+      "configuration": "optimized",
+      "seed": 1,
+      "wall_ms": 293.08487501111813,
+      "correct": 4,
+      "questions": 4,
+      "usage": {
+        "prompt_tokens": 191,
+        "questions": 4,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 204.587708984036,
+        "decode_ms": 87.78249999159016,
+        "total_ms": 293.0569580057636,
+        "peak_memory_gb": 18.176274838
+      }
+    },
+    {
+      "case": "scaling_1",
+      "configuration": "optimized",
+      "seed": 1,
+      "wall_ms": 226.3562500011176,
+      "correct": 1,
+      "questions": 1,
+      "usage": {
+        "prompt_tokens": 101,
+        "questions": 1,
+        "decoder_passes": 1,
+        "canvas_tokens": 16,
+        "prefill_ms": 161.76937500131316,
+        "decode_ms": 64.04141697566956,
+        "total_ms": 226.33133301860653,
+        "peak_memory_gb": 18.01900403
+      }
+    },
+    {
+      "case": "scaling_1",
+      "configuration": "optimized",
+      "seed": 2,
+      "wall_ms": 217.03345800051466,
+      "correct": 1,
+      "questions": 1,
+      "usage": {
+        "prompt_tokens": 101,
+        "questions": 1,
+        "decoder_passes": 1,
+        "canvas_tokens": 16,
+        "prefill_ms": 161.6428330016788,
+        "decode_ms": 54.818291013361886,
+        "total_ms": 217.00737500214018,
+        "peak_memory_gb": 18.01900403
+      }
+    },
+    {
+      "case": "scaling_4",
+      "configuration": "optimized",
+      "seed": 2,
+      "wall_ms": 285.03391600679606,
+      "correct": 4,
+      "questions": 4,
+      "usage": {
+        "prompt_tokens": 191,
+        "questions": 4,
+        "decoder_passes": 1,
+        "canvas_tokens": 32,
+        "prefill_ms": 204.54137498745695,
+        "decode_ms": 79.76308398065157,
+        "total_ms": 285.0065410020761,
+        "peak_memory_gb": 18.176274838
+      }
+    },
+    {
+      "case": "scaling_8",
+      "configuration": "optimized",
+      "seed": 2,
+      "wall_ms": 402.4613339861389,
+      "correct": 8,
+      "questions": 8,
+      "usage": {
+        "prompt_tokens": 311,
+        "questions": 8,
+        "decoder_passes": 1,
+        "canvas_tokens": 48,
+        "prefill_ms": 277.95766698545776,
+        "decode_ms": 123.53137499303557,
+        "total_ms": 402.42975001456216,
+        "peak_memory_gb": 18.25037988
+      }
+    },
+    {
+      "case": "scaling_16",
+      "configuration": "optimized",
+      "seed": 2,
+      "wall_ms": 633.8014169887174,
+      "correct": 16,
+      "questions": 16,
+      "usage": {
+        "prompt_tokens": 557,
+        "questions": 16,
+        "decoder_passes": 1,
+        "canvas_tokens": 96,
+        "prefill_ms": 504.4594589853659,
+        "decode_ms": 127.76970799313858,
+        "total_ms": 633.757458999753,
+        "peak_memory_gb": 18.520566
+      }
+    },
+    {
+      "case": "scaling_32",
+      "configuration": "optimized",
+      "seed": 2,
+      "wall_ms": 1078.609833988594,
+      "correct": 32,
+      "questions": 32,
+      "usage": {
+        "prompt_tokens": 1053,
+        "questions": 32,
+        "decoder_passes": 1,
+        "canvas_tokens": 192,
+        "prefill_ms": 865.8532080007717,
+        "decode_ms": 208.64845800679177,
+        "total_ms": 1078.5605410055723,
+        "peak_memory_gb": 18.683894088
+      }
+    }
+  ]
+}

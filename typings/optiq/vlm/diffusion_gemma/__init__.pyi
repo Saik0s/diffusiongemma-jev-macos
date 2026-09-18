@@ -1,0 +1,3 @@
+from diffusion_jev.runtime_types import DiffusionModel, Tokenizer
+
+def load(model_path: str) -> tuple[DiffusionModel, Tokenizer]: ...
