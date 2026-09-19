@@ -174,6 +174,11 @@ The model first reads the state and questions. It then evaluates short answer po
 The server reads the model's numerical preferences for those labels and converts them into probabilities.
 Python constructs the response JSON, so there is no generated prose to extract or repair.
 
+An optional experimental startup setting lets the model generate internal
+reasoning before those decisions. It stays off by default and can make responses
+much slower. The API still returns typed answers, and the reasoning text stays
+inside the running process. See [experimental reasoning](setup.md#experimental-reasoning).
+
 **DiffusionGemma** is the model doing those calculations.
 **MLX** runs them on Apple Silicon. **OptiQ** loads this compressed version of the model.
 **4-bit** describes how most model weights are stored compactly; it does not mean answers have only four possible values.

@@ -7,6 +7,7 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Literal
 
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, ValidationError
@@ -16,6 +17,15 @@ DATASET_REVISION = "68e8f0731a656fa4bd5b7c81936d95ad48a39bfe"
 REPO = "https://raw.githubusercontent.com/anessbelbati/jev-rerank-bench/"
 DATASET = "https://huggingface.co/datasets/mteb/CodeSearchNetRetrieval/resolve/"
 DEFAULT_CACHE = Path.home() / ".cache/diffusion-jev/retrieval-v1"
+EvaluationSplit = Literal["historical", "development", "validation", "test"]
+SPLIT_RULE = "local-jev-accuracy-v1"
+
+
+def split_description(split: EvaluationSplit) -> str:
+    return (
+        f"{SPLIT_RULE}:{split}; first 50 source rows historical; remaining 250 sorted by "
+        "(SHA256('local-jev-accuracy-v1:' + qid), qid); 40 development, 60 validation, 150 test"
+    )
 
 
 class MissingBenchmarkDependency(ValueError):
@@ -78,6 +88,28 @@ class RetrievalData:
     queries: list[Query]
     documents: dict[str, str]
     archived: dict[str, ArchivedPrediction]
+
+
+def select_split(data: RetrievalData, split: EvaluationSplit) -> RetrievalData:
+    """Use the frozen row exclusion and hash cohort, never observed model outcomes."""
+    if len(data.queries) != 300 or len({query.qid for query in data.queries}) != 300:
+        raise ValueError("Frozen splits require all 300 unique source queries")
+    historical = data.queries[:50]
+    remaining = sorted(
+        data.queries[50:],
+        key=lambda query: (
+            hashlib.sha256(f"{SPLIT_RULE}:{query.qid}".encode()).hexdigest(), query.qid
+        ),
+    )
+    cohorts = {
+        "historical": historical,
+        "development": remaining[:40],
+        "validation": remaining[40:100],
+        "test": remaining[100:],
+    }
+    if split not in cohorts:
+        raise ValueError("Unknown evaluation split")
+    return RetrievalData(cohorts[split], data.documents, data.archived)
 
 
 def fetch_source(source: Source, cache: Path, *, persist: bool = True) -> bytes:

@@ -13,8 +13,10 @@ class DecisionClientError(RuntimeError):
 
 
 class DecisionClient:
-    def __init__(self, base_url: str = "http://127.0.0.1:8017") -> None:
-        self._client = httpx.Client(base_url=base_url.rstrip("/"), timeout=120.0)
+    def __init__(
+        self, base_url: str = "http://127.0.0.1:8017", *, timeout: float = 120.0,
+    ) -> None:
+        self._client = httpx.Client(base_url=base_url.rstrip("/"), timeout=timeout)
 
     def decide(self, request: DecisionRequest) -> DecisionResponse:
         try:

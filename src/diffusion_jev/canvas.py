@@ -16,6 +16,9 @@ from diffusion_jev.schemas import (
     ScoreAnswer,
 )
 
+THOUGHT_OPEN = "<|channel>thought\n"
+THOUGHT_CLOSE = "<channel|>"
+
 
 class TextTokenizer(Protocol):
     def encode(self, text: str, *, add_special_tokens: bool) -> list[int]: ...
@@ -73,9 +76,13 @@ def compile_canvas(
     *,
     width: int | None,
     pad_token_id: int,
+    include_empty_thought: bool = True,
 ) -> Canvas:
     labels = [labels_for(question) for question in questions.values()]
-    head = tokenizer.encode("<|channel>thought\n<channel|>", add_special_tokens=False)
+    head = (
+        tokenizer.encode(THOUGHT_OPEN + THOUGHT_CLOSE, add_special_tokens=False)
+        if include_empty_thought else []
+    )
 
     def encode(selected: list[str]) -> list[int]:
         text = "\n".join(f"q{index}: {label}" for index, label in enumerate(selected))

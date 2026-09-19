@@ -1,8 +1,11 @@
 """The small, version-pinned OptiQ surface used by the local adapter."""
 
+from collections.abc import Sequence
 from typing import Literal, Protocol
 
 import mlx.core as mx
+
+from diffusion_jev.precision import PrecisionLayer
 
 
 class Tokenizer(Protocol):
@@ -20,10 +23,16 @@ class Tokenizer(Protocol):
 
 class Cache(Protocol):
     @property
+    def offset(self) -> int: ...
+
+    @property
     def state(self) -> tuple[mx.array, mx.array]: ...
 
 
 class Embedding(Protocol):
+    @property
+    def weight(self) -> mx.array: ...
+
     def __call__(self, tokens: mx.array) -> mx.array: ...
 
     def as_linear(self, hidden: mx.array) -> mx.array: ...
@@ -31,9 +40,18 @@ class Embedding(Protocol):
 
 class Decoder(Protocol):
     @property
+    def embed_scale(self) -> float: ...
+
+    @property
+    def layers(self) -> Sequence[PrecisionLayer]: ...
+
+    @property
     def embed_tokens(self) -> Embedding: ...
 
-    def __call__(self, canvas_ids: mx.array, *, cache: list[Cache]) -> mx.array: ...
+    def __call__(
+        self, canvas_ids: mx.array, *, cache: list[Cache],
+        self_conditioning_embeddings: mx.array | None = None,
+    ) -> mx.array: ...
 
 
 class Encoder(Protocol):
@@ -62,6 +80,9 @@ class TextConfig(Protocol):
 
 
 class ModelConfig(Protocol):
+    @property
+    def canvas_length(self) -> int: ...
+
     @property
     def text_config(self) -> TextConfig: ...
 

@@ -15,6 +15,7 @@ from typing import Literal
 
 from diffusion_jev.api import DecisionEngine
 from diffusion_jev.benchmark_cases import BenchmarkCase, quality_cases, scaling_case
+from diffusion_jev.model_manifest import CHECKPOINTS
 from diffusion_jev.schemas import (
     Answer,
     DecisionOptions,
@@ -82,7 +83,7 @@ class Environment(StrictModel):
     python: str
     packages: dict[str, str]
     model_basename: str
-    reference_model_hf_id: str = "mlx-community/diffusiongemma-26B-A4B-it-OptiQ-4bit"
+    reference_model_hf_id: str | None = None
 
 
 class BenchmarkReport(StrictModel):
@@ -266,7 +267,9 @@ def environment_metadata(model_path: Path) -> Environment:
                 else:
                     chip = result.stdout.strip()
     packages: dict[str, str] = {}
-    for name in ("diffusion-jev", "mlx", "mlx-optiq", "pydantic"):
+    for name in (
+        "diffusion-jev", "mlx", "mlx-optiq", "mlx-lm", "pydantic", "transformers", "tokenizers"
+    ):
         try:
             packages[name] = version(name)
         except PackageNotFoundError:
@@ -274,8 +277,19 @@ def environment_metadata(model_path: Path) -> Environment:
     return Environment(
         system=f"{platform.system()} {platform.release()}", architecture=platform.machine(),
         chip=chip, memory_bytes=memory, python=platform.python_version(), packages=packages,
-        model_basename=model_path.name,
+        model_basename=model_path.name, reference_model_hf_id=_reference_repo(model_path),
     )
+
+
+def _reference_repo(model_path: Path) -> str | None:
+    """Identify a known source by location; file hashes establish actual identity."""
+    for profile in CHECKPOINTS.values():
+        if model_path.name == profile.repo.split("/")[-1]:
+            return profile.repo
+        if (model_path.parent.name == "snapshots" and model_path.name == profile.revision
+                and model_path.parent.parent.name == "models--" + profile.repo.replace("/", "--")):
+            return profile.repo
+    return None
 
 
 class BenchmarkArguments(argparse.Namespace):

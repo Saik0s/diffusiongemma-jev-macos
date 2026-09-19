@@ -63,6 +63,10 @@ A classifier can inform a route; it should not become the only security check ar
 It demonstrates how code can own rules and memory while a model supplies judgments.
 Its game results do not measure coding ability or transfer directly to this project.
 
+[Simple-JEV](https://github.com/featherless-ai/simple-jev), from Featherless, serves the same request shape from open Hugging Face models by reading next-token logits after an assistant JSON prefill.
+It is the closest open design to this project, with a different model family and different Noul and confidence semantics.
+Its repository carries no license file, so we describe its ideas in [the Jev comparison](jev-differences.md#simple-jev-an-open-reimplementation-on-autoregressive-models) and copied nothing from it.
+
 ## Benchmarks people have published
 
 [jev-rerank-bench](https://github.com/anessbelbati/jev-rerank-bench) compares Jev with other rerankers using shared candidate lists and saved responses.

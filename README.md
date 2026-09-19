@@ -119,6 +119,13 @@ The [examples walkthrough](docs/examples.md) explains the input, policy, expecte
 
 **Local runtime speed:** on an M2 Ultra, the earlier small synthetic suite took **291 ms median** per request with the default configuration, versus **472 ms** for the original baseline. Those tiny prompts are easier than real retrieval requests. They do not establish coding competence. See [the runtime benchmark](docs/benchmarks.md).
 
+**Accuracy experiments in progress:** on a frozen 40-query development cohort,
+the one-read baseline scored **25/40** on seed 0 and **23/40** on seed 1. Eight
+averaged reads scored **28/40** on both seeds; a 256-token reasoning prepass
+scored **29/40** and then **24/40**. These are development screens, not held-out
+proof. The seed-2 recheck, coding screens, and held-out validation are unfinished,
+and no default has changed. See [the accuracy study](docs/accuracy-study.md).
+
 To reproduce the real-code evaluation against the running server:
 
 ```sh
@@ -144,6 +151,8 @@ The benchmark downloads public evaluation data. It does not call a paid Jev API.
 - [API reference](docs/api.md): complete fields, options, limits, and errors.
 - [Community sources](docs/community.md): the projects behind these examples.
 - [Implementation notes](docs/research.md): how the local model produces answers and where it differs from Jev.
+- [Differences from Jev](docs/jev-differences.md): observed hosted behavior, contracts, probabilities, batching, latency, and the open Simple-JEV design.
+- [Accuracy evaluation](docs/accuracy-study.md): frozen cohorts, experiment controls, and reproducible comparisons.
 
 Run the local checks from a checkout:
 

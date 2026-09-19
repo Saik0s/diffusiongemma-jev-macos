@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "measured_at": "2026-09-19",
+  "claim_scope": "Practical setup comparison, not an isolated engine or hardware comparison",
+  "model": {
+    "name": "Qwen3.8-27B 4-bit",
+    "target_revision": "3e6447f082e89cc7f0bc6e5441afd38dfce760ff",
+    "splash_package_revision": "9d27070b71f7142c6b6025f03ac011d70a73cb48"
+  },
+  "setups": {
+    "splash_m4": {
+      "engine": "Splash 1.0",
+      "engine_commit": "c675ed23e6942b5353961246e68b08cd63fb4ee9",
+      "decode": "mandatory DFlash 2",
+      "hardware": "Apple M4 Max, 32-core GPU, 36 GB",
+      "os": "macOS 26.5.2 (25F84)"
+    },
+    "omlx_m2": {
+      "engine": "oMLX 0.6.1",
+      "engine_commit": "b587575f3696fbc86c236b906684a48a92f8b118",
+      "decode": "default BatchedEngine without DFlash",
+      "hardware": "Apple M2 Ultra, 60-core GPU, 64 GB",
+      "os": "macOS 27.0 (26A428)"
+    }
+  },
+  "settings": {
+    "temperature": 0,
+    "top_p": 1,
+    "top_k": 1,
+    "seed": 0,
+    "streaming": true
+  },
+  "coding_decode": {
+    "method": "Three public synthetic coding prompts, one excluded warmup then three measured exact replays per prompt, medium reasoning, 1024-token limit",
+    "measured_requests_per_setup": 9,
+    "all_completion_tokens": 1024,
+    "all_finish_reasons": "length",
+    "prompt_tokens": [32, 38],
+    "splash_m4": {
+      "client_decode_tokens_per_second": {
+        "min": 26.523263960249295,
+        "median": 39.801096710721325,
+        "max": 41.3670329792187
+      },
+      "time_to_first_generated_token_seconds": {
+        "min": 0.36477249999006744,
+        "median": 0.3752585839974927,
+        "max": 0.4666034999972908
+      }
+    },
+    "omlx_m2": {
+      "client_decode_tokens_per_second": {
+        "min": 21.873064998663377,
+        "median": 33.23078098522429,
+        "max": 34.31290591037364
+      },
+      "time_to_first_generated_token_seconds": {
+        "min": 0.5613899999880232,
+        "median": 0.6735080830112565,
+        "max": 0.8137632090074476
+      }
+    },
+    "splash_m4_over_omlx_m2_median_decode_ratio": 1.1977177643949581,
+    "per_prompt_median_decode_ratios": [
+      1.1790553651862758,
+      1.1977177643949581,
+      1.0366143743613176
+    ]
+  },
+  "prefill_and_exact_replay": {
+    "method": "Three synthetic source prompts, one first request and one exact replay per prompt, reasoning disabled, one output token",
+    "splash_m4": {
+      "prompt_tokens": 3407,
+      "first_request_ttft_seconds": {
+        "min": 21.29744879200007,
+        "median": 21.448827500003972,
+        "max": 21.669000374997267
+      },
+      "exact_replay_cached_prompt_tokens": 3392,
+      "exact_replay_ttft_seconds": {
+        "min": 0.28643875000125263,
+        "median": 0.29251487499277573,
+        "max": 0.2978142499923706
+      }
+    },
+    "omlx_m2": {
+      "prompt_tokens": 3435,
+      "first_request_ttft_seconds": {
+        "min": 18.964025708002737,
+        "median": 19.027213916997425,
+        "max": 19.916923708980903
+      },
+      "exact_replay_cached_prompt_tokens": 2048,
+      "exact_replay_ttft_seconds": {
+        "min": 7.913950791989919,
+        "median": 7.92917808398488,
+        "max": 8.005657916975906
+      }
+    },
+    "omlx_m2_over_splash_m4_median_cold_ttft_ratio": 0.8870980904198097,
+    "omlx_m2_over_splash_m4_median_exact_replay_ttft_ratio": 27.106922628056804
+  },
+  "safety": {
+    "both_runs_completed": true,
+    "observed_pressure_levels": [1],
+    "swap_used_growth_bytes": 0,
+    "swap_out_growth_bytes": 0,
+    "raw_prompts_or_outputs_persisted": false
+  },
+  "limitations": [
+    "Hardware, operating system, engine, cache implementation, and speculative decoding all differ.",
+    "The engine-specific chat-template paths produced 3407 versus 3435 prompt tokens in the long-prompt workload.",
+    "The exact replay comparison includes different reported cache coverage: 3392 tokens for Splash and 2048 for oMLX.",
+    "Three repeats support medians and ranges, not tail-latency claims.",
+    "Splash 1.0 cannot run DiffusionGemma, so these Qwen results are not a DiffusionGemma speedup measurement."
+  ]
+}

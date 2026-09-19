@@ -55,8 +55,8 @@ The remainder of this page uses `uv run` from the checkout.
 `start` checks these locations in order:
 
 1. A directory supplied with `--model`, or `JEV_MODEL_PATH` if the flag is absent.
-2. The existing LM Studio directory, `~/.cache/lm-studio/models/mlx-community/diffusiongemma-26B-A4B-it-OptiQ-4bit`.
-3. The pinned snapshot in the Hugging Face cache.
+2. For the default OptiQ profile, the existing LM Studio directory, `~/.cache/lm-studio/models/mlx-community/diffusiongemma-26B-A4B-it-OptiQ-4bit`.
+3. The selected precision's pinned snapshot in the Hugging Face cache.
 4. A download into that cache, if no complete model is available.
 
 An explicitly selected invalid directory is an error; it does not silently download a different model.
@@ -70,6 +70,27 @@ The download source is [mlx-community/diffusiongemma-26B-A4B-it-OptiQ-4bit](http
 revision `30f3c7c7746bf41cfd1a290155cc3b777ab588b9`.
 The model includes four main weight files and an additional OptiQ file needed by the loader.
 You do not need to choose or convert these files yourself.
+
+### Experimental precision profiles
+
+`start --precision 8bit` selects a genuine 8-bit checkpoint. `start --precision bf16`
+selects unquantized BF16 weights. Explicit `--model` and `JEV_MODEL_PATH` directories
+take precedence; the precision flag does not convert their weights.
+
+| Profile | Required download | Pinned revision |
+| --- | --- | --- |
+| `optiq4` (default) | 17.85 GB | `30f3c7c7746bf41cfd1a290155cc3b777ab588b9` |
+| `8bit` | 28.00 GB | `7b95e3887078ba56283c24f2578d6e5a06b9d7e8` |
+| `bf16` | 51.68 GB | `2cd36f950eb065c96c80810fb6b859b114cd052d` |
+
+Downloads and runtime memory are different costs. The measured 8-bit development
+run peaked at about **29.2 GB** during inference and **30.1 GB** during loading.
+Higher precision alone did not improve that run's accuracy.
+
+**BF16 is not validated for this 64 GiB Mac.** Our disposable feasibility probe
+stopped during loading when macOS reported memory pressure; it did not reach
+inference. The precision flag selects files, not a guarantee that they fit.
+The server does not run that experimental watchdog or impose a total-memory cap.
 
 ## Use another path or port
 
@@ -87,9 +108,40 @@ To load an existing model without the download fallback:
 uv run jev-local serve --model /path/to/model
 ```
 
-Both `serve` and `start` accept `--host`, `--port`, and `--max-prompt-tokens`.
-The defaults are `127.0.0.1`, `8017`, and `8192`.
+Both `serve` and `start` accept `--host`, `--port`, `--max-prompt-tokens`,
+`--cache-limit-mib`, and `--reasoning-tokens`. Defaults are `127.0.0.1`, `8017`,
+`8192`, `512`, and `0`, respectively.
+The cache limit bounds reusable MLX allocator memory, **not total model memory**.
+It does not change macOS wired-memory settings. `0` disables allocator caching.
 Use `--help` for the complete command syntax.
+
+### Experimental reasoning
+
+Reasoning is disabled by default. To add a bounded reasoning pass before each
+decision group, opt in when starting the server:
+
+```sh
+uv run jev-local start --reasoning-tokens 256
+# Or load an existing directory with the larger experimental budget:
+uv run jev-local serve --model /path/to/model --reasoning-tokens 512
+```
+
+Accepted budgets are **0, 256, and 512**. This is a server-wide setting, not a
+per-request API option. It can make responses substantially slower and does not
+guarantee better accuracy. The supplied Python client's default **120-second
+network timeout** may be too short for longer requests. Use
+`DecisionClient(timeout=600.0)` to allow a longer wait.
+
+The 256-token budget reserves **257 tokens**, and the 512-token budget reserves
+**513 tokens**, within `--max-prompt-tokens`, including one closing token. Each
+formatted prompt, including its thought-opening marker, must fit in the remaining
+space. Independent mode performs a separate reasoning pass per question.
+Generated reasoning stays in memory and is not returned by the API.
+
+Decision sampling remains a per-request setting: `options.samples` accepts
+**1–8**, default **1**, and averages independent decision reads after reasoning.
+Structured trajectories remain benchmark-only. See the
+[API reference](api.md#timing-and-limits) for usage metrics and limits.
 
 ## Work offline or retry a download
 
@@ -119,7 +171,9 @@ Do not stop an unrelated service just to use the default port.
 
 ### The model is incomplete or a checksum does not match
 
-For a user-managed directory, check that it is the complete OptiQ DiffusionGemma checkpoint.
+For a user-managed directory, check that it contains the complete DiffusionGemma
+checkpoint for its layout. OptiQ requires its metadata and vision sidecar;
+standard MLX 8-bit and BF16 layouts require vision weights in the weight index.
 For the managed cache, retry with a fresh `--cache-dir` or repair the affected Hugging Face cache.
 The server will not accept a managed file whose checksum differs from the pinned manifest.
 An interrupted download can be retried by rerunning `start` online; completed files are reused.
@@ -148,6 +202,7 @@ Use the OptiQ checkpoint and pinned runtime; stock `mlx-lm` and `mlx-vlm` do not
 
 Supply fewer or shorter snippets, or split the work into multiple requests.
 The default **8,192-token** limit applies after formatting the state and questions.
+Reasoning budgets additionally reserve **257 or 513 tokens** inside that limit.
 Increasing `--max-prompt-tokens` can increase memory use and latency.
 Requests are rejected rather than silently shortened.
 

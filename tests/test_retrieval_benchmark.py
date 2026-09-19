@@ -21,7 +21,13 @@ from diffusion_jev.retrieval_data import (
     fetch_source,
     validate_join,
 )
-from diffusion_jev.schemas import DecisionRequest, DecisionResponse, NoulAnswer, Usage
+from diffusion_jev.schemas import (
+    DecisionOptions,
+    DecisionRequest,
+    DecisionResponse,
+    NoulAnswer,
+    Usage,
+)
 
 
 def fixture_data() -> RetrievalData:
@@ -120,6 +126,8 @@ def test_failure_stays_in_fixed_quality_denominator_and_report_has_no_content() 
     assert report.quality["local"].top1 == 0
     assert report.quality["archived_jev_noul_batch"].top1 == 1
     assert report.wall_p50_ms is None
+    assert report.measurements[0].request_count == 1
+    assert report.measurements[0].response_count == 0
     serialized = report.model_dump_json()
     assert "Find matching function" not in serialized
     assert "codecode" not in serialized
@@ -166,3 +174,99 @@ def test_retrieval_miss_is_in_all_query_metrics_but_not_conditional_metrics() ->
     assert report.quality["local"].ndcg10 is None
     assert report.all_query_quality["local"].n == 1
     assert report.all_query_quality["local"].ndcg10 == 0
+
+
+def test_independent_options_preserve_five_passage_evidence_and_record_actual_cost() -> None:
+    seen: list[DecisionRequest] = []
+    options = DecisionOptions(seed=7, samples=4, mode="independent", projection="full",
+                              canvas_length=32)
+
+    def decide(request: DecisionRequest) -> DecisionResponse:
+        seen.append(request)
+        result = answer(request)
+        result.usage.decoder_passes = len(request.questions) * request.options.samples
+        return result
+
+    data = fixture_data()
+    report = run_retrieval(data, decide, seed=123, options=options)
+    assert len(seen) == 7
+    assert all(request.options == options for request in seen)
+    assert seen[0].state == {
+        "query": data.queries[0].query,
+        "passages": {f"p{i:02d}": "code" * 500 for i in range(1, 6)},
+    }
+    assert len(seen[0].questions) == 5
+    assert report.decision_options == options
+    assert report.seed == 7
+    assert report.measurements[0].decoder_passes == 120
+    assert report.measurements[0].top_score_ties == 1
+
+
+def test_resume_keeps_failed_queries_and_only_runs_remaining_prefix() -> None:
+    data = fixture_data()
+    calls = 0
+
+    def fail(request: DecisionRequest) -> DecisionResponse:
+        nonlocal calls
+        calls += 1
+        if calls > 1:
+            raise RuntimeError("synthetic runtime failure")
+        return answer(request)
+
+    initial = run_retrieval(data, fail)
+    calls = 0
+
+    def warmup_only(request: DecisionRequest) -> DecisionResponse:
+        nonlocal calls
+        calls += 1
+        return answer(request)
+
+    saved: list[str] = []
+    resumed = run_retrieval(data, warmup_only, completed=initial.measurements,
+                            on_measurement=lambda item: saved.append(item.qid))
+    assert calls == 1
+    assert saved == []
+    assert resumed.failed == 1
+    assert resumed.all_query_quality["local"].n == 1
+    assert resumed.all_query_quality["local"].top1 == 0.0
+    wrong = initial.measurements[0].model_copy(update={"qid": "wrong"})
+    with pytest.raises(ValueError, match="exact query prefix"):
+        run_retrieval(data, answer, completed=[wrong])
+
+
+@pytest.mark.parametrize("invalid_response", [False, True])
+def test_reasoning_costs_are_counted_without_warmup_even_for_failed_ranking(
+    invalid_response: bool,
+) -> None:
+    calls = 0
+
+    def decide(request: DecisionRequest) -> DecisionResponse:
+        nonlocal calls
+        calls += 1
+        result = answer(request)
+        result.usage.decoder_passes = 9
+        result.usage.canvas_tokens = 2048
+        result.usage.reasoning_tokens = 128
+        result.usage.reasoning_ms = 12.0
+        result.usage.reasoning_passes = 8
+        result.usage.reasoning_forced_closures = 1
+        result.usage.trajectory_accepted_slots = 3
+        if invalid_response and calls > 1:
+            result.answers.clear()
+        return result
+
+    report = run_retrieval(fixture_data(), decide)
+    item = report.measurements[0]
+    requests = 1 if invalid_response else 6
+    assert item.request_count == requests
+    assert item.response_count == requests
+    assert item.decoder_passes == requests * 9
+    assert item.canvas_tokens == requests * 2048
+    assert item.reasoning_tokens == requests * 128
+    assert item.reasoning_ms == requests * 12.0
+    assert item.reasoning_passes == requests * 8
+    assert item.reasoning_forced_closures == requests
+    assert item.trajectory_accepted_slots == requests * 3
+    assert item.success is not invalid_response
+    assert report.failed == int(invalid_response)
+    assert report.all_query_quality["local"].n == 1

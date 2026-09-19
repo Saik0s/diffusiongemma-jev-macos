@@ -6,6 +6,7 @@ import platform
 import sys
 from pathlib import Path
 
+from diffusion_jev.model_manifest import CHECKPOINTS, Precision
 from diffusion_jev.provisioning import (
     LM_STUDIO_MODEL,
     ProvisioningError,
@@ -21,8 +22,11 @@ class ServeArguments(argparse.Namespace):
     host: str
     port: int
     max_prompt_tokens: int
+    reasoning_tokens: int
+    cache_limit_mib: int
     cache_dir: Path | None
     offline: bool
+    precision: Precision
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -47,7 +51,19 @@ def main(argv: list[str] | None = None) -> None:
         serve.add_argument("--host", default="127.0.0.1")
         serve.add_argument("--port", type=int, default=8017)
         serve.add_argument("--max-prompt-tokens", type=int, default=8192)
+        serve.add_argument(
+            "--reasoning-tokens", type=int, choices=(0, 256, 512), default=0,
+            help="Experimental reasoning budget before decisions (default: 0); may be slower",
+        )
+        serve.add_argument(
+            "--cache-limit-mib", type=int, default=512,
+            help="MLX allocator cache limit in MiB (default: 512); not a total memory limit",
+        )
         if command == "start":
+            serve.add_argument(
+                "--precision", choices=tuple(CHECKPOINTS), default="optiq4",
+                help="Managed precision (default: optiq4); explicit model paths override",
+            )
             serve.add_argument("--cache-dir", type=Path, help="Hugging Face model cache directory")
             serve.add_argument("--offline", action="store_true", help="Never download model files")
     commands.add_parser("demo", help="Run structured-decision demos", add_help=False)
@@ -57,6 +73,8 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv, namespace=ServeArguments())
     if args.max_prompt_tokens < 1:
         parser.error("--max-prompt-tokens must be positive")
+    if args.cache_limit_mib < 0:
+        parser.error("--cache-limit-mib must be nonnegative")
     if not 1 <= args.port <= 65535:
         parser.error("--port must be between 1 and 65535")
     if platform.system() != "Darwin" or platform.machine() != "arm64":
@@ -68,6 +86,7 @@ def main(argv: list[str] | None = None) -> None:
                 args.model,
                 cache_dir=args.cache_dir,
                 offline=args.offline,
+                precision=args.precision,
                 report=lambda message: print(message, flush=True),
             )
         else:
@@ -91,7 +110,11 @@ def main(argv: list[str] | None = None) -> None:
     from diffusion_jev.engine import LocalEngine
 
     def load_engine() -> LocalEngine:
-        engine = LocalEngine(model_path=model_path, max_prompt_tokens=args.max_prompt_tokens)
+        engine = LocalEngine(
+            model_path=model_path, max_prompt_tokens=args.max_prompt_tokens,
+            cache_limit_bytes=args.cache_limit_mib * 1024**2,
+            reasoning_tokens=args.reasoning_tokens,
+        )
         print(f"Model loaded in {engine.load_seconds:.1f}s. Starting the local API.", flush=True)
         return engine
 

@@ -53,6 +53,31 @@ class Ranking(StrictModel):
     mrr10: float
 
 
+class DiagnosticSummary(StrictModel):
+    slots: int
+    allowed_label_mass_min: float
+    allowed_label_mass_mean: float
+    invalid_argmax_count: int
+
+
+def merge_diagnostics(
+    previous: DiagnosticSummary | None, current: DiagnosticSummary
+) -> DiagnosticSummary:
+    if current.slots < 1:
+        raise ValueError("Diagnostics require at least one slot")
+    if previous is None:
+        return current
+    return DiagnosticSummary(
+        slots=previous.slots + current.slots,
+        allowed_label_mass_min=min(previous.allowed_label_mass_min, current.allowed_label_mass_min),
+        allowed_label_mass_mean=(
+            previous.allowed_label_mass_mean * previous.slots
+            + current.allowed_label_mass_mean * current.slots
+        ) / (previous.slots + current.slots),
+        invalid_argmax_count=previous.invalid_argmax_count + current.invalid_argmax_count,
+    )
+
+
 class QueryMeasurement(StrictModel):
     qid: str
     eligible: bool
@@ -62,6 +87,16 @@ class QueryMeasurement(StrictModel):
     bm25: Ranking
     archived_jev: Ranking
     request_count: int = 0
+    response_count: int = 0
+    decoder_passes: int = 0
+    canvas_tokens: int = 0
+    reasoning_tokens: int = 0
+    reasoning_ms: float = 0.0
+    reasoning_passes: int = 0
+    reasoning_forced_closures: int = 0
+    trajectory_accepted_slots: int = 0
+    top_score_ties: int | None = None
+    diagnostics: DiagnosticSummary | None = None
     wall_ms: float = 0.0
     prompt_tokens: int = 0
     peak_memory_gb: float = 0.0
@@ -158,7 +193,8 @@ def summarize(values: list[Ranking]) -> Quality:
 
 
 def build_requests(
-    query: Query, documents: dict[str, str], *, group_size: int, seed: int
+    query: Query, documents: dict[str, str], *, group_size: int, seed: int = 0,
+    options: DecisionOptions | None = None,
 ) -> list[DecisionRequest]:
     if not 1 <= group_size <= 30:
         raise ValueError("Group size must be between 1 and 30")
@@ -177,7 +213,7 @@ def build_requests(
             )
         requests.append(DecisionRequest(
             state={"query": query.query, "passages": passages}, questions=questions,
-            options=DecisionOptions(seed=seed, mode="packed", projection="labels"),
+            options=options or DecisionOptions(seed=seed, mode="packed", projection="labels"),
         ))
     return requests
 
@@ -199,17 +235,25 @@ def read_scores(request: DecisionRequest, response: DecisionResponse) -> list[fl
 def run_retrieval(
     data: RetrievalData,
     decide: Callable[[DecisionRequest], DecisionResponse],
-    *, group_size: int = 5, seed: int = 0,
+    *, group_size: int = 5, seed: int = 0, options: DecisionOptions | None = None,
+    selection: str | None = None, completed: list[QueryMeasurement] | None = None,
+    on_measurement: Callable[[QueryMeasurement], None] | None = None,
+    read_diagnostics: Callable[[], DiagnosticSummary | None] | None = None,
 ) -> Report:
     if not data.queries:
         raise ValueError("At least one public query is required")
-    first = build_requests(data.queries[0], data.documents, group_size=group_size, seed=seed)[0]
+    effective = options or DecisionOptions(seed=seed)
+    measurements = list(completed or [])
+    if [item.qid for item in measurements] != [q.qid for q in data.queries[:len(measurements)]]:
+        raise ValueError("Completed measurements must be an exact query prefix")
+    first = build_requests(
+        data.queries[0], data.documents, group_size=group_size, options=effective
+    )[0]
     started = time.perf_counter()
     warmup = decide(first)
     read_scores(first, warmup)
     warmup_ms = (time.perf_counter() - started) * 1000
-    measurements: list[QueryMeasurement] = []
-    for query in data.queries:
+    for query in data.queries[len(measurements):]:
         item = QueryMeasurement(
             qid=query.qid, eligible=query.n_rel_top30 > 0, success=False,
             bm25=rank_metrics(query, [candidate.bm25 for candidate in query.present]),
@@ -218,20 +262,38 @@ def run_retrieval(
         started = time.perf_counter()
         scores: list[float] = []
         try:
-            for request in build_requests(query, data.documents, group_size=group_size, seed=seed):
+            for request in build_requests(
+                query, data.documents, group_size=group_size, options=effective
+            ):
                 item.request_count += 1
                 response = decide(request)
+                item.response_count += 1
+                # Work happened even if the returned answer cannot be used for ranking.
+                item.prompt_tokens += response.usage.prompt_tokens
+                item.decoder_passes += response.usage.decoder_passes
+                item.canvas_tokens += response.usage.canvas_tokens
+                item.reasoning_tokens += response.usage.reasoning_tokens
+                item.reasoning_ms += response.usage.reasoning_ms
+                item.reasoning_passes += response.usage.reasoning_passes
+                item.reasoning_forced_closures += response.usage.reasoning_forced_closures
+                item.trajectory_accepted_slots += response.usage.trajectory_accepted_slots
+                item.peak_memory_gb = max(item.peak_memory_gb, response.usage.peak_memory_gb)
                 if response.model != warmup.model:
                     raise ValueError("Model identity changed during benchmark")
                 scores.extend(read_scores(request, response))
-                item.prompt_tokens += response.usage.prompt_tokens
-                item.peak_memory_gb = max(item.peak_memory_gb, response.usage.peak_memory_gb)
+                if read_diagnostics is not None:
+                    diagnostic = read_diagnostics()
+                    if diagnostic is not None:
+                        item.diagnostics = merge_diagnostics(item.diagnostics, diagnostic)
             item.local = rank_metrics(query, scores)
+            item.top_score_ties = scores.count(max(scores))
             item.success = True
-        except (DecisionClientError, ValueError):
+        except (DecisionClientError, ValueError, RuntimeError):
             item.error = "Request or response validation failed; no partial ranking used"
         item.wall_ms = (time.perf_counter() - started) * 1000
         measurements.append(item)
+        if on_measurement is not None:
+            on_measurement(item)
         print(f"Completed query {len(measurements)}/{len(data.queries)}; "
               f"success={item.success}", flush=True)
 
@@ -247,12 +309,13 @@ def run_retrieval(
 
     eligible = sum(item.eligible for item in measurements)
     latency = [item.wall_ms for item in measurements if item.success]
-    return Report(
+    report = Report(
         timestamp_utc=datetime.now(UTC).isoformat(),
         source_sha256={source.name: source.sha256 for source in SOURCES},
-        limit=len(data.queries), seed=seed, group_size=group_size, model=warmup.model,
+        limit=len(data.queries), seed=effective.seed, group_size=group_size, model=warmup.model,
         decision_options=first.options, client_environment=client_environment(),
-        protocol=(f"30 BM25 candidates, sequential groups of {group_size}; packed Noul per group. "
+        protocol=(f"30 BM25 candidates, sequential groups of {group_size}; "
+                  f"{effective.mode} Noul with the full group state. "
                   "Source Noul criteria appended to local instructions."),
         caveats=[
             "Docstring-to-code retrieval pilot; not code generation, bug detection or SWE-bench.",
@@ -264,8 +327,11 @@ def run_retrieval(
             "Stable ties retain BM25 order, as upstream; sparse labels may miss valid matches.",
             "Wilson intervals are descriptive for a small fixed cohort, not population or "
             "equivalence guarantees. Public training contamination is unknown.",
-            "One excluded first-group warmup; wall latency includes HTTP and sequential groups. "
+            "One excluded first-group warmup; wall latency includes sequential groups and any "
+            "client transport overhead. "
             "No archived cloud latency comparison is made.",
+            "Usage includes returned responses, including invalid ones; requests failing before "
+            "a response may have unreported work. Compare request_count with response_count.",
         ],
         warmup_ms=warmup_ms, eligible=eligible, coverage=eligible / len(measurements),
         successful=len(latency), failed=len(measurements) - len(latency),
@@ -274,6 +340,9 @@ def run_retrieval(
         wall_p95_ms=nearest_rank(latency, 0.95) if latency else None,
         measurements=measurements,
     )
+    if selection is not None:
+        report.selection = selection
+    return report
 
 
 class Arguments(argparse.Namespace):

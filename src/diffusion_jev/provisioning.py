@@ -13,9 +13,10 @@ from pathlib import Path
 
 from huggingface_hub import constants, snapshot_download
 from huggingface_hub.errors import LocalEntryNotFoundError
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ConfigDict, ValidationError
 
-from diffusion_jev.model_manifest import ARTIFACTS, MODEL_REPO, MODEL_REVISION
+from diffusion_jev import model_manifest
+from diffusion_jev.model_manifest import MODEL_REPO, CheckpointProfile, Precision
 
 LM_STUDIO_MODEL = Path("~/.cache/lm-studio/models") / MODEL_REPO
 DISK_RESERVE = 1024**3
@@ -27,15 +28,23 @@ class ProvisioningError(Exception):
     """An actionable error safe to show without raw transport exception details."""
 
 
+class QuantizationConfig(BaseModel):
+    model_config = ConfigDict(strict=True)
+    bits: int
+
+
 class ModelConfig(BaseModel):
+    model_config = ConfigDict(strict=True)
     model_type: str
+    quantization: QuantizationConfig | None = None
 
 
 class WeightIndex(BaseModel):
+    model_config = ConfigDict(strict=True)
     weight_map: dict[str, str]
 
 
-def validate_local_model(path: Path) -> Path:
+def validate_local_model(path: Path, *, profile: CheckpointProfile | None = None) -> Path:
     """Check local structure; user-managed files are not checksum-certified."""
     path = path.expanduser().resolve()
     if not path.is_dir():
@@ -45,7 +54,6 @@ def validate_local_model(path: Path) -> Path:
         "tokenizer.json",
         "tokenizer_config.json",
         "model.safetensors.index.json",
-        "optiq_metadata.json",
     )
     for name in required:
         _require_file(path / name, name)
@@ -60,14 +68,29 @@ def validate_local_model(path: Path) -> Path:
         raise ProvisioningError(
             "Expected a DiffusionGemma checkpoint with a nonempty weight index."
         )
+    if profile is not None:
+        bits = config.quantization.bits if config.quantization is not None else None
+        if config.model_type != profile.model_type or bits != profile.quantization_bits:
+            raise ProvisioningError("Model configuration does not match the selected precision.")
     for shard in set(index.weight_map.values()):
         if Path(shard).name != shard or not shard.endswith(".safetensors"):
             raise ProvisioningError("The model weight index contains an unsupported shard path.")
         _require_file(path / shard, "a weight shard referenced by the index")
-    sidecar = path / "optiq/optiq_vision.safetensors"
-    if not sidecar.is_file():
-        sidecar = path / "optiq_vision.safetensors"
-    _require_file(sidecar, "optiq_vision.safetensors (in optiq/ or the model directory)")
+    indexed_vision = any(
+        key.startswith("model.encoder.vision_tower.") for key in index.weight_map
+    ) and any(key.startswith("model.encoder.embed_vision.") for key in index.weight_map)
+    optiq_layout = (
+        profile.layout == "optiq" if profile is not None
+        else (path / "optiq_metadata.json").exists() or not indexed_vision
+    )
+    if optiq_layout:
+        _require_file(path / "optiq_metadata.json", "optiq_metadata.json")
+        sidecar = path / "optiq/optiq_vision.safetensors"
+        if not sidecar.is_file():
+            sidecar = path / "optiq_vision.safetensors"
+        _require_file(sidecar, "optiq_vision.safetensors (in optiq/ or the model directory)")
+    elif not indexed_vision:
+        raise ProvisioningError("Standard MLX checkpoint is missing indexed vision weights.")
     return path
 
 
@@ -89,9 +112,11 @@ def preflight_port(host: str, port: int) -> None:
         ) from exc
 
 
-def verify_snapshot(path: Path, report: Callable[[str], None]) -> None:
+def verify_snapshot(
+    path: Path, report: Callable[[str], None], *, profile: CheckpointProfile
+) -> None:
     """Hash every pinned artifact, including warm caches and completed downloads."""
-    for artifact in ARTIFACTS:
+    for artifact in profile.artifacts:
         file = path / artifact.name
         _require_file(file, artifact.name)
         if file.stat().st_size != artifact.size:
@@ -134,13 +159,13 @@ def _private_download_transport() -> Iterator[None]:
                 logger.setLevel(level)
 
 
-def _snapshot(cache_dir: Path, *, offline: bool) -> Path:
+def _snapshot(cache_dir: Path, *, offline: bool, profile: CheckpointProfile) -> Path:
     with _private_download_transport():
         result = snapshot_download(
-            MODEL_REPO,
-            revision=MODEL_REVISION,
+            profile.repo,
+            revision=profile.revision,
             cache_dir=cache_dir,
-            allow_patterns=[artifact.name for artifact in ARTIFACTS],
+            allow_patterns=[artifact.name for artifact in profile.artifacts],
             local_files_only=offline,
         )
     if not isinstance(result, str):
@@ -148,18 +173,20 @@ def _snapshot(cache_dir: Path, *, offline: bool) -> Path:
     return Path(result)
 
 
-def _complete(path: Path) -> bool:
+def _complete(path: Path, profile: CheckpointProfile) -> bool:
     # HF local_files_only may return a snapshot containing just one downloaded file.
-    return all((path / item.name).is_file() for item in ARTIFACTS)
+    return all((path / item.name).is_file() for item in profile.artifacts)
 
 
-def _preflight_cache(cache_dir: Path, cached: Path | None) -> None:
+def _preflight_cache(cache_dir: Path, cached: Path | None, profile: CheckpointProfile) -> None:
     cache_dir.mkdir(parents=True, exist_ok=True)
     # A real write probe also catches ACLs and read-only volumes.
     with tempfile.TemporaryFile(dir=cache_dir):
         pass
     missing = sum(
-        item.size for item in ARTIFACTS if cached is None or not (cached / item.name).is_file()
+        item.size
+        for item in profile.artifacts
+        if cached is None or not (cached / item.name).is_file()
     )
     required = missing + DISK_RESERVE
     if shutil.disk_usage(cache_dir).free < required:
@@ -174,19 +201,24 @@ def resolve_model(
     *,
     cache_dir: Path | None = None,
     offline: bool = False,
+    precision: Precision = "optiq4",
     report: Callable[[str], None] = print,
 ) -> Path:
-    """Prefer explicit paths, LM Studio, then a complete pinned Hugging Face snapshot."""
+    """Resolve an explicit directory or the selected immutable checkpoint profile."""
     try:
+        profile = model_manifest.CHECKPOINTS[precision]
         explicit = model or (
             Path(os.environ["JEV_MODEL_PATH"]) if os.environ.get("JEV_MODEL_PATH") else None
         )
         if explicit is not None:
             result = validate_local_model(explicit)
-            report("Using the selected local model (structure checked; checksums not verified).")
+            report(
+                "Using the selected local model (structure checked; checksums not verified). "
+                "--precision applies only to managed checkpoints; the explicit path takes priority."
+            )
             return result
         local = LM_STUDIO_MODEL.expanduser()
-        if local.exists():
+        if precision == "optiq4" and local.exists():
             try:
                 result = validate_local_model(local)
             except ProvisioningError:
@@ -197,25 +229,25 @@ def resolve_model(
         cache_dir = (cache_dir or Path(constants.HF_HUB_CACHE)).expanduser().resolve()
         cached: Path | None = None
         try:
-            cached = _snapshot(cache_dir, offline=True)
+            cached = _snapshot(cache_dir, offline=True, profile=profile)
         except LocalEntryNotFoundError:
             pass
-        if cached is not None and _complete(cached):
+        if cached is not None and _complete(cached, profile):
             report("Found the pinned checkpoint in the Hugging Face cache; verifying integrity.")
-            verify_snapshot(cached, report)
-            return validate_local_model(cached)
+            verify_snapshot(cached, report, profile=profile)
+            return validate_local_model(cached, profile=profile)
         if offline or constants.HF_HUB_OFFLINE:
             raise ProvisioningError(
                 "No complete cached checkpoint is available offline. "
                 "Supply --model or rerun start online to download it."
             )
-        _preflight_cache(cache_dir, cached)
-        total = sum(item.size for item in ARTIFACTS) / 1024**3
-        report(f"Downloading pinned {MODEL_REPO} ({total:.1f} GiB total).")
+        _preflight_cache(cache_dir, cached, profile)
+        total = sum(item.size for item in profile.artifacts) / 1024**3
+        report(f"Downloading pinned {profile.repo} ({total:.1f} GiB total).")
         report("Completed files are reused; an interrupted file may restart.")
-        downloaded = _snapshot(cache_dir, offline=False)
-        verify_snapshot(downloaded, report)
-        result = validate_local_model(downloaded)
+        downloaded = _snapshot(cache_dir, offline=False, profile=profile)
+        verify_snapshot(downloaded, report, profile=profile)
+        result = validate_local_model(downloaded, profile=profile)
         report("Checkpoint verified. Loading the model...")
         return result
     except ProvisioningError:

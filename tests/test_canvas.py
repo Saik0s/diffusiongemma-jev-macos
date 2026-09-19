@@ -5,6 +5,8 @@ from typing import Literal
 import pytest
 
 from diffusion_jev.canvas import (
+    THOUGHT_CLOSE,
+    THOUGHT_OPEN,
     compile_canvas,
     entropy_confidence,
     make_answer,
@@ -88,6 +90,22 @@ def test_canvas_uses_minimum_block_and_preserves_turn_marker() -> None:
     turn_position = canvas.tokens.index(tokenizer.vocabulary["<turn|>"])
     assert turn_position > canvas.slots[0].position
     assert all(token == 0 for token in canvas.tokens[turn_position + 1:])
+
+
+def test_reasoned_canvas_recomputes_slots_without_duplicate_thought() -> None:
+    tokenizer = LexemeTokenizer()
+    questions: dict[str, Question] = {"first": noul(), "second": choice()}
+    original = compile_canvas(tokenizer, questions, width=32, pad_token_id=0)
+    reasoned = compile_canvas(
+        tokenizer, questions, width=32, pad_token_id=0, include_empty_thought=False,
+    )
+    head = tokenizer.encode(THOUGHT_OPEN + THOUGHT_CLOSE, add_special_tokens=False)
+    assert all(token not in reasoned.tokens for token in head)
+    for before, after in zip(original.slots, reasoned.slots, strict=True):
+        assert after.token_ids == before.token_ids
+        assert after.position == before.position - len(head)
+        assert reasoned.tokens[after.position] == original.tokens[before.position]
+    assert len(reasoned.tokens) == 32
 
 
 @pytest.mark.parametrize("width", [16, 32, 256])

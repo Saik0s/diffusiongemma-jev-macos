@@ -39,7 +39,7 @@ class DecisionOptions(StrictModel):
     seed: Annotated[int, Field(ge=0, le=2**32 - 1)] = 0
     samples: Annotated[int, Field(ge=1, le=8)] = 1
     mode: Literal["packed", "independent"] = "packed"
-    projection: Literal["labels", "full"] = "labels"
+    projection: Literal["labels", "labels-fp32", "full"] = "labels"
     canvas_length: Annotated[int, Field(ge=16, le=256, multiple_of=16)] | None = None
 
 
@@ -83,6 +83,11 @@ class Usage(StrictModel):
     decode_ms: NonnegativeFloat
     total_ms: NonnegativeFloat
     peak_memory_gb: NonnegativeFloat
+    reasoning_tokens: Annotated[int, Field(ge=0)] = 0
+    reasoning_ms: NonnegativeFloat = 0.0
+    reasoning_passes: Annotated[int, Field(ge=0)] = 0
+    reasoning_forced_closures: Annotated[int, Field(ge=0)] = 0
+    trajectory_accepted_slots: Annotated[int, Field(ge=0)] = 0
 
 
 class DecisionResponse(StrictModel):

@@ -127,6 +127,71 @@ All **183 scaling judgments** matched their simple expected predicates. Peak MLX
 active allocation reached **18.68 GB** at 32 questions, including loaded weights.
 This metric excludes allocator cache and is not process resident memory.
 
+## M4 Max memory-constrained run
+
+The same harness and current source tree were also run on an **Apple M4 Max with
+36 GiB** of unified memory and macOS **26.5.2**. Python and all seven recorded
+package versions matched the M2 environment, and all **13 model files** were
+verified before the run. The process completed only after enough application
+memory had been freed; an earlier attempt was stopped by the normal-pressure
+guard during model loading.
+
+The completed run answered all **60/60** mixed-workload judgments and all scaling
+judgments correctly. It measured **296 / 410 ms p50 / p95** and **7.98
+questions/second** for the optimized path. Loading took **9.21 seconds**, and the
+first 256-token request took **2.36 seconds**. At 32 questions, the median was
+**1,220 ms** and throughput was **26.24 questions/second**. Selected-label and
+full-vocabulary projection again had **0.0** maximum probability difference and
+zero argmax disagreements over 60 paired judgments.
+
+The guard sampled a **20.35 GB** peak process footprint and no increase in swap
+use or swap-out bytes. MLX reported a **19.98 GB** load peak. These use different
+memory measurements and should not be compared as the same quantity.
+
+This is evidence that the existing MLX runtime works on the tested M4 Max with
+adequate free memory. It is not a controlled M2-versus-M4 benchmark: the public
+M2 data predates the current source fingerprint, and neither machine was held to
+the same background load, thermal state, or operating-system version.
+
+## Splash M4 versus oMLX M2 setup comparison
+
+Splash 1.0 cannot load DiffusionGemma, so this separate test used its supported
+**Qwen3.8-27B 4-bit** package. Both setups used target revision
+`3e6447f082e89cc7f0bc6e5441afd38dfce760ff`, greedy sampling, and the same
+messages. Splash ran on the **M4 Max, 32-core GPU, 36 GB**; oMLX 0.6.1 ran on the
+**M2 Ultra, 60-core GPU, 64 GB** with its default BatchedEngine and DFlash
+disabled. These are two complete deployments, not a same-hardware engine test.
+
+The decode workload used three synthetic coding prompts, medium reasoning, and
+a 1,024-token limit. Each prompt had one excluded warmup followed by three
+measured exact replays. Every measured request reached 1,024 tokens.
+
+| Measure, median of 9 | Splash / M4 Max | oMLX / M2 Ultra | Ratio |
+| --- | ---: | ---: | ---: |
+| Client decode throughput | **39.80 tok/s** | 33.23 tok/s | **1.20×** |
+| First generated token | **0.375 s** | 0.674 s | **1.79× faster** |
+
+Decode ranges were **26.52–41.37 tok/s** for Splash and **21.87–34.31 tok/s**
+for oMLX. Per-prompt median Splash/oMLX ratios were **1.18×, 1.20×, and 1.04×**,
+so the gain varied materially with the prompt and draft acceptance.
+
+The long-prompt probe used three synthetic source prompts and one output token.
+The engine-specific template paths produced 3,407 Splash tokens versus 3,435
+oMLX tokens. The first uncached request favored oMLX: **19.03 seconds** median
+to first token versus **21.45 seconds** for Splash. Exact replay strongly favored
+Splash: **0.293 seconds** versus **7.93 seconds**, a **27.11×** latency ratio.
+Splash reported 3,392 cached tokens; oMLX reported 2,048, so the replay result
+measures their cache policies as well as cache-hit execution.
+
+Both guarded runs stayed at normal memory pressure with zero swap growth. The M2
+needed an unrelated background indexing service paused during model loading; it
+was restored immediately afterward.
+No prompt or generated text was persisted. The machine-readable aggregate is
+[published with the benchmark artifacts](../benchmarks/splash-m4-vs-omlx-m2-2026-09-19.json).
+Three repeats support medians and ranges, not reliable p95 claims. These Qwen
+results do not establish a DiffusionGemma speedup because Splash has no
+DiffusionGemma backend.
+
 ## Reproduce and interpret
 
 Stop the server to avoid loading a second model, then run:
