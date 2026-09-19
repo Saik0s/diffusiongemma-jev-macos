@@ -1,0 +1,541 @@
+{
+ "schema_version": 1,
+ "measured_at": "2026-09-20",
+ "suite": "benchmarks/matched-suite-2026-09-19.json",
+ "suite_schema_version": 2,
+ "purpose": "One paired run of the frozen matched suite: local DiffusionGemma in both sampling profiles, and real hosted Jev, all issued from the same machine and network so workload origin and transport are common to every side.",
+ "content_note": "Derived measurements only. No request state, no prompt text, no credential, and no account identifier is recorded here. Case tags already appear in the public frozen suite.",
+ "environment": {
+  "runtime_host": "Apple M4 Max, 14 CPU, 36 GiB unified memory",
+  "os": "macOS 27.0 build 26A428",
+  "python": "3.13.9",
+  "note": "Every model load, local inference, benchmark, test run, and hosted call ran on this one machine. Nothing was measured on the authoring Mac."
+ },
+ "local": {
+  "model": "diffusiongemma-26B-A4B-it-OptiQ-4bit",
+  "model_bytes": 17852051888,
+  "revision": "30f3c7c7746bf41cfd1a290155cc3b777ab588b9",
+  "prompt_template": "jev-local-prompt-v2",
+  "server": "127.0.0.1:8017, one inference worker, eight waiting slots",
+  "cache_limit_mib": 512,
+  "reasoning_tokens": 0,
+  "options_sent": "none, so each side used its own documented defaults",
+  "profiles": {
+   "fast": {
+    "reads_per_request": 1,
+    "cases": 38,
+    "failures": 0,
+    "round_trip_s": {
+     "n": 38,
+     "median": 0.3355,
+     "p90": 0.9006
+    },
+    "server_inference_ms": {
+     "n": 38,
+     "median": 334.6581,
+     "p90": 899.5652
+    },
+    "peak_mlx_memory_gb": 18.68,
+    "labelled_accuracy": "20/20",
+    "top_choice_agreement_with_hosted": "20/21",
+    "max_answer_gap_vs_hosted": 0.9611,
+    "validation_parity": "4/4",
+    "guard": {
+     "peak_rss_kb": 9802944,
+     "lowest_free_memory_pct": 32.0,
+     "aborted": false,
+     "released_after_job": true,
+     "free_memory_pct_after": 80.0
+    }
+   },
+   "accuracy": {
+    "reads_per_request": 8,
+    "cases": 38,
+    "failures": 0,
+    "round_trip_s": {
+     "n": 38,
+     "median": 0.3839,
+     "p90": 0.9905
+    },
+    "server_inference_ms": {
+     "n": 38,
+     "median": 383.0607,
+     "p90": 989.5516
+    },
+    "peak_mlx_memory_gb": 18.68,
+    "labelled_accuracy": "20/20",
+    "top_choice_agreement_with_hosted": "20/21",
+    "max_answer_gap_vs_hosted": 0.9611,
+    "validation_parity": "4/4",
+    "guard": {
+     "peak_rss_kb": 8066912,
+     "lowest_free_memory_pct": 29.0,
+     "aborted": false,
+     "released_after_job": true,
+     "free_memory_pct_after": 79.0
+    }
+   }
+  }
+ },
+ "hosted": {
+  "endpoint": "https://openrouter.ai/api/alpha/decisions",
+  "requested_model": "typesafe/jev-1.13",
+  "resolved_model": "typesafe/jev-1.13-20260917",
+  "origin": "remote laptop, residential network",
+  "cases": 38,
+  "failures": 0,
+  "round_trip_s": {
+   "n": 38,
+   "median": 0.3263,
+   "p90": 0.5107
+  },
+  "round_trip_s_frozen_run": {
+   "n": 38,
+   "median": 0.3343,
+   "p90": 0.4685
+  },
+  "labelled_accuracy": "20/20",
+  "total_cost_usd": 0.001098,
+  "input_tokens": 24907,
+  "output_tokens": 1772,
+  "server_inference_ms": null,
+  "server_inference_note": "The hosted envelope reports no server-side inference time, so hosted has a round trip only. Local round trip and local server inference are separate columns and are never subtracted from the hosted number."
+ },
+ "hosted_stability": {
+  "compared": "answers recorded 2026-09-19 against the same requests remeasured 2026-09-20",
+  "top_choice_identical": "21/21",
+  "max_numeric_drift": 0.03,
+  "note": "Hosted probabilities arrive rounded to two decimals, so drift at 0.01 to 0.03 is at the resolution of the reported numbers. No winning label changed."
+ },
+ "headline": "Both sides answered all 38 comparable cases with no failures and scored 20/20 on the 20 mechanically labelled questions. Median round trip was 0.336 s local fast, 0.384 s local accuracy, and 0.326 s hosted; hosted p90 of 0.511 s beat local p90 of 0.901 s. The eight-read accuracy profile changed no answer on this suite while adding about 14 percent to median latency, so the default stays fast.",
+ "limitations": [
+  "20/20 on both sides is a weak signal. Only 6 of the 20 labelled questions have a single correct key; the other 14 accept either of two keys, so the ceiling is easy to reach and this suite does not separate the two systems on quality.",
+  "Hosted answers are not ground truth. They are an agreement reference. The labels are mechanical, derived from each case's own state, not human annotation.",
+  "Retrieval metrics are undefined here. nDCG and MRR need a ranked candidate list against relevance judgments, and no case in this suite ranks a list, so neither is reported rather than reported as a placeholder.",
+  "The single top-choice disagreement is probe/score_three_levels. Hosted scored 1.98 of 2 and local scored about 1.02, on a state whose text reads as a third escalation. Hosted's reading is the more plausible one.",
+  "The first case of every local run carries warm-up. checkout/struggling took 4.005 s on the fast run and 2.026 s on the accuracy run, against medians near 0.34 s and 0.38 s, which is why medians and p90 are reported rather than a mean.",
+  "One paired run per profile, 38 cases, one machine, one residential network, one day. No repeated trials, so no confidence interval is claimed on any latency figure.",
+  "Two payloads that hosted Jev answered are rejected by the local strict schema: a structured Noul criteria object and null Choice descriptions. They are counted as hosted-only inputs and excluded from the answer comparison, because there is no local answer to compare.",
+  "Held-out evaluation remains unfinished. The development-set seed sweep in the accuracy study is not a held-out result, and no accuracy winner is claimed from it."
+ ],
+ "cases": [
+  {
+   "tag": "checkout/struggling",
+   "labelled": false,
+   "local_fast_round_trip_s": 4.0051,
+   "local_accuracy_round_trip_s": 2.026,
+   "hosted_round_trip_s_frozen": 0.5361,
+   "hosted_round_trip_s_remeasured": 0.5341,
+   "max_answer_gap_vs_hosted": 0.2994,
+   "top_choice_agreements": 0,
+   "top_choice_comparisons": 0
+  },
+  {
+   "tag": "checkout/ready",
+   "labelled": false,
+   "local_fast_round_trip_s": 0.8029,
+   "local_accuracy_round_trip_s": 0.7881,
+   "hosted_round_trip_s_frozen": 1.4996,
+   "hosted_round_trip_s_remeasured": 0.2815,
+   "max_answer_gap_vs_hosted": 0.08,
+   "top_choice_agreements": 0,
+   "top_choice_comparisons": 0
+  },
+  {
+   "tag": "checkout/card_testing",
+   "labelled": false,
+   "local_fast_round_trip_s": 0.8101,
+   "local_accuracy_round_trip_s": 0.8899,
+   "hosted_round_trip_s_frozen": 0.4453,
+   "hosted_round_trip_s_remeasured": 0.3563,
+   "max_answer_gap_vs_hosted": 0.3072,
+   "top_choice_agreements": 0,
+   "top_choice_comparisons": 0
+  },
+  {
+   "tag": "checkout/struggling/repeat1",
+   "labelled": false,
+   "local_fast_round_trip_s": 0.9006,
+   "local_accuracy_round_trip_s": 0.982,
+   "hosted_round_trip_s_frozen": 0.4026,
+   "hosted_round_trip_s_remeasured": 0.4019,
+   "max_answer_gap_vs_hosted": 0.3194,
+   "top_choice_agreements": 0,
+   "top_choice_comparisons": 0
+  },
+  {
+   "tag": "checkout/struggling/repeat2",
+   "labelled": false,
+   "local_fast_round_trip_s": 0.8995,
+   "local_accuracy_round_trip_s": 0.9905,
+   "hosted_round_trip_s_frozen": 0.3324,
+   "hosted_round_trip_s_remeasured": 0.2432,
+   "max_answer_gap_vs_hosted": 0.2994,
+   "top_choice_agreements": 0,
+   "top_choice_comparisons": 0
+  },
+  {
+   "tag": "checkout/struggling/promo_alone",
+   "labelled": false,
+   "local_fast_round_trip_s": 0.6208,
+   "local_accuracy_round_trip_s": 0.678,
+   "hosted_round_trip_s_frozen": 0.6318,
+   "hosted_round_trip_s_remeasured": 0.8659,
+   "max_answer_gap_vs_hosted": 0.01,
+   "top_choice_agreements": 0,
+   "top_choice_comparisons": 0
+  },
+  {
+   "tag": "checkout/struggling/help_alone",
+   "labelled": false,
+   "local_fast_round_trip_s": 0.5841,
+   "local_accuracy_round_trip_s": 0.6457,
+   "hosted_round_trip_s_frozen": 0.3237,
+   "hosted_round_trip_s_remeasured": 0.2932,
+   "max_answer_gap_vs_hosted": 0.5636,
+   "top_choice_agreements": 0,
+   "top_choice_comparisons": 0
+  },
+  {
+   "tag": "checkout/struggling/promo_no_criteria",
+   "labelled": false,
+   "local_fast_round_trip_s": 0.6009,
+   "local_accuracy_round_trip_s": 0.6812,
+   "hosted_round_trip_s_frozen": 0.2611,
+   "hosted_round_trip_s_remeasured": 0.3209,
+   "max_answer_gap_vs_hosted": 0.0197,
+   "top_choice_agreements": 0,
+   "top_choice_comparisons": 0
+  },
+  {
+   "tag": "checkout/struggling/reversed_order",
+   "labelled": false,
+   "local_fast_round_trip_s": 0.9462,
+   "local_accuracy_round_trip_s": 1.0629,
+   "hosted_round_trip_s_frozen": 0.3475,
+   "hosted_round_trip_s_remeasured": 0.2768,
+   "max_answer_gap_vs_hosted": 0.7893,
+   "top_choice_agreements": 0,
+   "top_choice_comparisons": 0
+  },
+  {
+   "tag": "grid/open_target_below",
+   "labelled": true,
+   "local_fast_round_trip_s": 0.3118,
+   "local_accuracy_round_trip_s": 0.3577,
+   "hosted_round_trip_s_frozen": 0.2931,
+   "hosted_round_trip_s_remeasured": 0.3265,
+   "max_answer_gap_vs_hosted": 0.0001,
+   "top_choice_agreements": 1,
+   "top_choice_comparisons": 1
+  },
+  {
+   "tag": "grid/open_target_right",
+   "labelled": true,
+   "local_fast_round_trip_s": 0.3073,
+   "local_accuracy_round_trip_s": 0.3601,
+   "hosted_round_trip_s_frozen": 0.3459,
+   "hosted_round_trip_s_remeasured": 0.3869,
+   "max_answer_gap_vs_hosted": 0.0002,
+   "top_choice_agreements": 1,
+   "top_choice_comparisons": 1
+  },
+  {
+   "tag": "grid/wall_blocks_down",
+   "labelled": true,
+   "local_fast_round_trip_s": 0.2925,
+   "local_accuracy_round_trip_s": 0.3551,
+   "hosted_round_trip_s_frozen": 0.2683,
+   "hosted_round_trip_s_remeasured": 0.341,
+   "max_answer_gap_vs_hosted": 0.1808,
+   "top_choice_agreements": 1,
+   "top_choice_comparisons": 1
+  },
+  {
+   "tag": "grid/wall_blocks_right",
+   "labelled": true,
+   "local_fast_round_trip_s": 0.2905,
+   "local_accuracy_round_trip_s": 0.3375,
+   "hosted_round_trip_s_frozen": 0.3278,
+   "hosted_round_trip_s_remeasured": 0.2961,
+   "max_answer_gap_vs_hosted": 0.1375,
+   "top_choice_agreements": 1,
+   "top_choice_comparisons": 1
+  },
+  {
+   "tag": "grid/diagonal_tie",
+   "labelled": true,
+   "local_fast_round_trip_s": 0.3057,
+   "local_accuracy_round_trip_s": 0.3521,
+   "hosted_round_trip_s_frozen": 0.3038,
+   "hosted_round_trip_s_remeasured": 0.316,
+   "max_answer_gap_vs_hosted": 0.1198,
+   "top_choice_agreements": 1,
+   "top_choice_comparisons": 1
+  },
+  {
+   "tag": "grid/edge_only_down",
+   "labelled": true,
+   "local_fast_round_trip_s": 0.3241,
+   "local_accuracy_round_trip_s": 0.376,
+   "hosted_round_trip_s_frozen": 0.3088,
+   "hosted_round_trip_s_remeasured": 0.3074,
+   "max_answer_gap_vs_hosted": 0.0001,
+   "top_choice_agreements": 1,
+   "top_choice_comparisons": 1
+  },
+  {
+   "tag": "grid/edge_only_right",
+   "labelled": true,
+   "local_fast_round_trip_s": 0.3,
+   "local_accuracy_round_trip_s": 0.3834,
+   "hosted_round_trip_s_frozen": 0.4156,
+   "hosted_round_trip_s_remeasured": 0.2899,
+   "max_answer_gap_vs_hosted": 0.0003,
+   "top_choice_agreements": 1,
+   "top_choice_comparisons": 1
+  },
+  {
+   "tag": "grid/both_closer_down_better",
+   "labelled": true,
+   "local_fast_round_trip_s": 0.2933,
+   "local_accuracy_round_trip_s": 0.3846,
+   "hosted_round_trip_s_frozen": 0.302,
+   "hosted_round_trip_s_remeasured": 0.3866,
+   "max_answer_gap_vs_hosted": 0.1695,
+   "top_choice_agreements": 1,
+   "top_choice_comparisons": 1
+  },
+  {
+   "tag": "grid/cadence/seq0",
+   "labelled": true,
+   "local_fast_round_trip_s": 0.2973,
+   "local_accuracy_round_trip_s": 0.3832,
+   "hosted_round_trip_s_frozen": 0.403,
+   "hosted_round_trip_s_remeasured": 0.2552,
+   "max_answer_gap_vs_hosted": 0.1098,
+   "top_choice_agreements": 1,
+   "top_choice_comparisons": 1
+  },
+  {
+   "tag": "grid/cadence/seq1",
+   "labelled": true,
+   "local_fast_round_trip_s": 0.3276,
+   "local_accuracy_round_trip_s": 0.3859,
+   "hosted_round_trip_s_frozen": 0.4685,
+   "hosted_round_trip_s_remeasured": 0.4012,
+   "max_answer_gap_vs_hosted": 0.1298,
+   "top_choice_agreements": 1,
+   "top_choice_comparisons": 1
+  },
+  {
+   "tag": "grid/cadence/seq2",
+   "labelled": true,
+   "local_fast_round_trip_s": 0.3383,
+   "local_accuracy_round_trip_s": 0.3854,
+   "hosted_round_trip_s_frozen": 0.2817,
+   "hosted_round_trip_s_remeasured": 0.3064,
+   "max_answer_gap_vs_hosted": 0.1398,
+   "top_choice_agreements": 1,
+   "top_choice_comparisons": 1
+  },
+  {
+   "tag": "grid/cadence/seq3",
+   "labelled": true,
+   "local_fast_round_trip_s": 0.3383,
+   "local_accuracy_round_trip_s": 0.3838,
+   "hosted_round_trip_s_frozen": 0.3454,
+   "hosted_round_trip_s_remeasured": 0.3067,
+   "max_answer_gap_vs_hosted": 0.1298,
+   "top_choice_agreements": 1,
+   "top_choice_comparisons": 1
+  },
+  {
+   "tag": "grid/cadence/seq4",
+   "labelled": true,
+   "local_fast_round_trip_s": 0.3382,
+   "local_accuracy_round_trip_s": 0.384,
+   "hosted_round_trip_s_frozen": 0.3492,
+   "hosted_round_trip_s_remeasured": 0.3116,
+   "max_answer_gap_vs_hosted": 0.1298,
+   "top_choice_agreements": 1,
+   "top_choice_comparisons": 1
+  },
+  {
+   "tag": "grid/cadence/seq5",
+   "labelled": true,
+   "local_fast_round_trip_s": 0.3357,
+   "local_accuracy_round_trip_s": 0.3851,
+   "hosted_round_trip_s_frozen": 0.309,
+   "hosted_round_trip_s_remeasured": 0.2626,
+   "max_answer_gap_vs_hosted": 0.1298,
+   "top_choice_agreements": 1,
+   "top_choice_comparisons": 1
+  },
+  {
+   "tag": "grid/cadence/seq6",
+   "labelled": true,
+   "local_fast_round_trip_s": 0.337,
+   "local_accuracy_round_trip_s": 0.3853,
+   "hosted_round_trip_s_frozen": 0.3683,
+   "hosted_round_trip_s_remeasured": 0.4348,
+   "max_answer_gap_vs_hosted": 0.1198,
+   "top_choice_agreements": 1,
+   "top_choice_comparisons": 1
+  },
+  {
+   "tag": "grid/cadence/seq7",
+   "labelled": true,
+   "local_fast_round_trip_s": 0.3387,
+   "local_accuracy_round_trip_s": 0.3839,
+   "hosted_round_trip_s_frozen": 0.3147,
+   "hosted_round_trip_s_remeasured": 0.3439,
+   "max_answer_gap_vs_hosted": 0.1098,
+   "top_choice_agreements": 1,
+   "top_choice_comparisons": 1
+  },
+  {
+   "tag": "grid/cadence/conc3",
+   "labelled": true,
+   "local_fast_round_trip_s": 0.3369,
+   "local_accuracy_round_trip_s": 0.3841,
+   "hosted_round_trip_s_frozen": 0.3014,
+   "hosted_round_trip_s_remeasured": 0.3887,
+   "max_answer_gap_vs_hosted": 0.1198,
+   "top_choice_agreements": 1,
+   "top_choice_comparisons": 1
+  },
+  {
+   "tag": "grid/cadence/conc0",
+   "labelled": true,
+   "local_fast_round_trip_s": 0.3353,
+   "local_accuracy_round_trip_s": 0.385,
+   "hosted_round_trip_s_frozen": 0.3108,
+   "hosted_round_trip_s_remeasured": 0.3052,
+   "max_answer_gap_vs_hosted": 0.1198,
+   "top_choice_agreements": 1,
+   "top_choice_comparisons": 1
+  },
+  {
+   "tag": "grid/cadence/conc2",
+   "labelled": true,
+   "local_fast_round_trip_s": 0.3364,
+   "local_accuracy_round_trip_s": 0.3846,
+   "hosted_round_trip_s_frozen": 0.3362,
+   "hosted_round_trip_s_remeasured": 0.4139,
+   "max_answer_gap_vs_hosted": 0.1198,
+   "top_choice_agreements": 1,
+   "top_choice_comparisons": 1
+  },
+  {
+   "tag": "grid/cadence/conc1",
+   "labelled": true,
+   "local_fast_round_trip_s": 0.3379,
+   "local_accuracy_round_trip_s": 0.3829,
+   "hosted_round_trip_s_frozen": 0.3581,
+   "hosted_round_trip_s_remeasured": 0.3029,
+   "max_answer_gap_vs_hosted": 0.1298,
+   "top_choice_agreements": 1,
+   "top_choice_comparisons": 1
+  },
+  {
+   "tag": "feed/single/ragebait_1",
+   "labelled": false,
+   "local_fast_round_trip_s": 0.3122,
+   "local_accuracy_round_trip_s": 0.3588,
+   "hosted_round_trip_s_frozen": 0.3074,
+   "hosted_round_trip_s_remeasured": 0.411,
+   "max_answer_gap_vs_hosted": 0.02,
+   "top_choice_agreements": 0,
+   "top_choice_comparisons": 0
+  },
+  {
+   "tag": "feed/single/ragebait_2",
+   "labelled": false,
+   "local_fast_round_trip_s": 0.3143,
+   "local_accuracy_round_trip_s": 0.3619,
+   "hosted_round_trip_s_frozen": 0.3645,
+   "hosted_round_trip_s_remeasured": 0.3157,
+   "max_answer_gap_vs_hosted": 0.04,
+   "top_choice_agreements": 0,
+   "top_choice_comparisons": 0
+  },
+  {
+   "tag": "feed/single/fearbait_1",
+   "labelled": false,
+   "local_fast_round_trip_s": 0.3114,
+   "local_accuracy_round_trip_s": 0.3604,
+   "hosted_round_trip_s_frozen": 0.2981,
+   "hosted_round_trip_s_remeasured": 0.326,
+   "max_answer_gap_vs_hosted": 0.02,
+   "top_choice_agreements": 0,
+   "top_choice_comparisons": 0
+  },
+  {
+   "tag": "feed/single/benign_1",
+   "labelled": false,
+   "local_fast_round_trip_s": 0.3161,
+   "local_accuracy_round_trip_s": 0.36,
+   "hosted_round_trip_s_frozen": 0.2719,
+   "hosted_round_trip_s_remeasured": 0.3428,
+   "max_answer_gap_vs_hosted": 0.03,
+   "top_choice_agreements": 0,
+   "top_choice_comparisons": 0
+  },
+  {
+   "tag": "feed/single/benign_2",
+   "labelled": false,
+   "local_fast_round_trip_s": 0.3086,
+   "local_accuracy_round_trip_s": 0.3385,
+   "hosted_round_trip_s_frozen": 0.3369,
+   "hosted_round_trip_s_remeasured": 0.3482,
+   "max_answer_gap_vs_hosted": 0.02,
+   "top_choice_agreements": 0,
+   "top_choice_comparisons": 0
+  },
+  {
+   "tag": "feed/single/benign_3",
+   "labelled": false,
+   "local_fast_round_trip_s": 0.3111,
+   "local_accuracy_round_trip_s": 0.343,
+   "hosted_round_trip_s_frozen": 0.3736,
+   "hosted_round_trip_s_remeasured": 0.5107,
+   "max_answer_gap_vs_hosted": 0.03,
+   "top_choice_agreements": 0,
+   "top_choice_comparisons": 0
+  },
+  {
+   "tag": "feed/batched_six",
+   "labelled": false,
+   "local_fast_round_trip_s": 1.1173,
+   "local_accuracy_round_trip_s": 1.2065,
+   "hosted_round_trip_s_frozen": 0.3684,
+   "hosted_round_trip_s_remeasured": 0.2836,
+   "max_answer_gap_vs_hosted": 0.03,
+   "top_choice_agreements": 0,
+   "top_choice_comparisons": 0
+  },
+  {
+   "tag": "probe/score_three_levels",
+   "labelled": false,
+   "local_fast_round_trip_s": 0.2295,
+   "local_accuracy_round_trip_s": 0.2633,
+   "hosted_round_trip_s_frozen": 0.2963,
+   "hosted_round_trip_s_remeasured": 0.3287,
+   "max_answer_gap_vs_hosted": 0.9611,
+   "top_choice_agreements": 0,
+   "top_choice_comparisons": 1
+  },
+  {
+   "tag": "probe/string_state",
+   "labelled": false,
+   "local_fast_round_trip_s": 0.2221,
+   "local_accuracy_round_trip_s": 0.2089,
+   "hosted_round_trip_s_frozen": 0.3233,
+   "hosted_round_trip_s_remeasured": 0.6983,
+   "max_answer_gap_vs_hosted": 0.02,
+   "top_choice_agreements": 0,
+   "top_choice_comparisons": 0
+  }
+ ]
+}

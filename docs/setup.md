@@ -109,11 +109,45 @@ uv run jev-local serve --model /path/to/model
 ```
 
 Both `serve` and `start` accept `--host`, `--port`, `--max-prompt-tokens`,
-`--cache-limit-mib`, and `--reasoning-tokens`. Defaults are `127.0.0.1`, `8017`,
-`8192`, `512`, and `0`, respectively.
+`--cache-limit-mib`, `--reasoning-tokens`, and `--profile`. Defaults are
+`127.0.0.1`, `8017`, `8192`, `512`, `0`, and `fast`, respectively.
 The cache limit bounds reusable MLX allocator memory, **not total model memory**.
 It does not change macOS wired-memory settings. `0` disables allocator caching.
 Use `--help` for the complete command syntax.
+
+### Choose a sampling profile
+
+`--profile` sets how many decision reads a request uses when it does not ask for
+a specific number:
+
+```sh
+# One read per request. This is the default.
+uv run jev-local start --profile fast
+# Eight reads per request, averaged.
+uv run jev-local start --profile accuracy
+```
+
+`fast` uses **1** read, `accuracy` uses **8**. A request that sets
+`options.samples` itself always wins, so the profile only changes the default.
+
+Each extra read is another decoder pass over the answer canvas; the prompt is
+prefilled once per request either way. Expect the accuracy profile to take
+noticeably longer per request, and size your client timeout accordingly.
+
+On the development cohort, eight reads scored **28/40 on both seed 0 and seed
+1**, against **25/40 and 23/40** for a single read. That is repeatable on those
+two seeds, but it is development data on 40 cases: the seed-2 recheck and the
+held-out evaluation are unfinished, so it is not a general accuracy claim, which
+is why `fast` remains the default. See the
+[accuracy study](accuracy-study.md) for the full record.
+
+On the 38-case matched suite the two profiles were indistinguishable: eight reads
+returned the same winning label on every case and the same 20/20 labelled score
+as one read, for about 14 percent more median round trip, 0.384 s against
+0.336 s. Those requests carry small states and short canvases, so the extra cost
+there is much smaller than on the accuracy study's 30-function reranks. Neither
+result changes the default. See the
+[matched comparison](jev-differences.md#measured-result-2026-09-20).
 
 ### Experimental reasoning
 
@@ -139,7 +173,8 @@ space. Independent mode performs a separate reasoning pass per question.
 Generated reasoning stays in memory and is not returned by the API.
 
 Decision sampling remains a per-request setting: `options.samples` accepts
-**1–8**, default **1**, and averages independent decision reads after reasoning.
+**1–8** and averages independent decision reads after reasoning. When omitted it
+follows `--profile` above.
 Structured trajectories remain benchmark-only. See the
 [API reference](api.md#timing-and-limits) for usage metrics and limits.
 

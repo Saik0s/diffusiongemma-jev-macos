@@ -65,6 +65,7 @@ class LocalEngine:
         reasoning_tokens: int = 0,
         trajectory_steps: int = 1,
         router_bf16_source: Path | None = None,
+        default_samples: int = 1,
     ) -> None:
         if not model_path.is_dir() or not (model_path / "config.json").is_file():
             raise FileNotFoundError("A local model directory containing config.json is required")
@@ -76,6 +77,8 @@ class LocalEngine:
             raise ValueError("Reasoning budget must be 0, 256 or 512 tokens")
         if trajectory_steps not in (1, 2):
             raise ValueError("Structured trajectory must use 1 or 2 steps")
+        if not 1 <= default_samples <= 8:
+            raise ValueError("default_samples must be between 1 and 8")
         if cache_limit_bytes is not None:
             if cache_limit_bytes < 0:
                 raise ValueError("cache_limit_bytes must be nonnegative")
@@ -102,6 +105,7 @@ class LocalEngine:
         self.cache_limit_bytes = cache_limit_bytes
         self.reasoning_tokens = reasoning_tokens
         self.trajectory_steps = trajectory_steps
+        self.default_samples = default_samples
         self.trajectory_accepted_slots = 0
         self.last_diagnostics: ReadDiagnostics | None = None
         self._lock = threading.Lock()
@@ -109,7 +113,9 @@ class LocalEngine:
     def _prepare(self, request: DecisionRequest) -> list[PreparedRead]:
         if self.trajectory_steps == 2 and request.options.projection != "full":
             raise ValueError("Two-step trajectory requires full projection")
-        state = json.dumps(request.state, ensure_ascii=False, sort_keys=True, allow_nan=False)
+        # Keep the caller's field order. Sorting moved "t" to the end of every
+        # timestamped event, which is not the evidence the caller wrote.
+        state = json.dumps(request.state, ensure_ascii=False, allow_nan=False)
         groups = (
             [request.questions]
             if request.options.mode == "packed"
@@ -265,9 +271,17 @@ class LocalEngine:
             invalid_argmax_count=invalid,
         )
 
+    def _apply_sampling_profile(self, request: DecisionRequest) -> DecisionRequest:
+        """Fill in the server's sampling profile only when the caller omitted `samples`."""
+        if "samples" in request.options.model_fields_set:
+            return request
+        options = request.options.model_copy(update={"samples": self.default_samples})
+        return request.model_copy(update={"options": options})
+
     def decide(self, request: DecisionRequest) -> DecisionResponse:
         if request.model != self.model_id:
             raise ValueError("Unknown model")
+        request = self._apply_sampling_profile(request)
         with self._lock:
             self.last_diagnostics = None
             self.trajectory_accepted_slots = 0

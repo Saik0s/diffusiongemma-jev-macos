@@ -10,7 +10,10 @@ from diffusion_jev import cli
 from diffusion_jev.provisioning import ProvisioningError
 
 
-@pytest.mark.parametrize("command", [[], ["start"], ["serve"], ["demo"], ["benchmark-search"]])
+@pytest.mark.parametrize(
+    "command",
+    [[], ["start"], ["serve"], ["demo"], ["benchmark-search"], ["benchmark-matched"]],
+)
 def test_help_never_imports_gpu(command: list[str]) -> None:
     code = (
         "import sys; from diffusion_jev.cli import main; "
@@ -114,17 +117,20 @@ def test_negative_cache_limit_fails_before_provisioning(monkeypatch: pytest.Monk
 
 @pytest.mark.parametrize("command", ["start", "serve"])
 @pytest.mark.parametrize(
-    "arguments, expected_mib, expected_reasoning",
+    "arguments, expected_mib, expected_reasoning, expected_samples",
     [
-        ([], 512, 0),
-        (["--cache-limit-mib", "0"], 0, 0),
-        (["--reasoning-tokens", "256"], 512, 256),
-        (["--reasoning-tokens", "512"], 512, 512),
+        ([], 512, 0, 1),
+        (["--cache-limit-mib", "0"], 0, 0, 1),
+        (["--reasoning-tokens", "256"], 512, 256, 1),
+        (["--reasoning-tokens", "512"], 512, 512, 1),
+        # The fast profile stays the default; accuracy is opt-in.
+        (["--profile", "fast"], 512, 0, 1),
+        (["--profile", "accuracy"], 512, 0, 8),
     ],
 )
 def test_server_factory_passes_process_settings(
     command: str, arguments: list[str], expected_mib: int, expected_reasoning: int,
-    monkeypatch: pytest.MonkeyPatch,
+    expected_samples: int, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     import uvicorn
 
@@ -147,6 +153,7 @@ def test_server_factory_passes_process_settings(
         model_path=Path("/verified-model"), max_prompt_tokens=8192,
         cache_limit_bytes=expected_mib * 1024**2,
         reasoning_tokens=expected_reasoning,
+        default_samples=expected_samples,
     )
 
 
@@ -167,3 +174,18 @@ def test_invalid_reasoning_budget_fails_before_model_work(
     preflight.assert_not_called()
     provision.assert_not_called()
     validate.assert_not_called()
+
+
+@pytest.mark.parametrize("command", ["start", "serve"])
+def test_unknown_profile_fails_before_model_work(
+    command: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    preflight = Mock()
+    provision = Mock()
+    monkeypatch.setattr(cli, "preflight_port", preflight)
+    monkeypatch.setattr(cli, "resolve_model", provision)
+    with pytest.raises(SystemExit) as error:
+        cli.main([command, "--profile", "exhaustive"])
+    assert error.value.code == 2
+    preflight.assert_not_called()
+    provision.assert_not_called()

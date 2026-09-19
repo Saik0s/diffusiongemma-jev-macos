@@ -19,6 +19,11 @@ from diffusion_jev.schemas import (
 THOUGHT_OPEN = "<|channel>thought\n"
 THOUGHT_CLOSE = "<channel|>"
 
+# Bump on any prompt wording, ordering or canvas-layout change: recorded accuracy
+# numbers only describe the template that produced them. v1 shipped without Noul
+# criteria rendering. tests/test_canvas.py pins the rendered text for this value.
+PROMPT_TEMPLATE_VERSION = "jev-local-prompt-v2"
+
 
 class TextTokenizer(Protocol):
     def encode(self, text: str, *, add_special_tokens: bool) -> list[int]: ...
@@ -59,7 +64,10 @@ def system_prompt(questions: dict[str, Question]) -> str:
         lines.append(f"\nQuestion q{index}: {question.instructions}")
         labels = labels_for(question)
         if isinstance(question, NoulQuestion):
-            lines.append("yes: The proposition is true.\nno: The proposition is false.")
+            criteria = question.criteria
+            true_side = criteria.true if criteria else "The proposition is true."
+            false_side = criteria.false if criteria else "The proposition is false."
+            lines.append(f"yes: {true_side}\nno: {false_side}")
         elif isinstance(question, ChoiceQuestion):
             for label, (name, description) in zip(labels, question.criteria.items(), strict=True):
                 lines.append(f"{label}: {json.dumps(name)}: {description}")
@@ -121,9 +129,15 @@ def compile_canvas(
     return Canvas(tuple(base + closing + [pad_token_id] * (width - need)), tuple(slots))
 
 
-def entropy_confidence(probabilities: list[float]) -> float:
-    entropy = -sum(p * math.log(p) for p in probabilities if p > 0)
-    return min(1.0, max(0.0, 1 - entropy / math.log(len(probabilities))))
+def margin_confidence(probabilities: list[float]) -> float:
+    """Gap between the two largest probabilities.
+
+    Hosted Jev returned exactly this quantity for all 21 probed Choice and Score
+    answers, within its two-decimal rounding. TypeSafe does not publish the
+    formula, so the match is observed rather than specified.
+    """
+    ranked = sorted(probabilities, reverse=True)
+    return min(1.0, max(0.0, ranked[0] - ranked[1]))
 
 
 def make_answer(question: Question, probabilities: list[float]) -> Answer:
@@ -137,7 +151,7 @@ def make_answer(question: Question, probabilities: list[float]) -> Answer:
     probabilities = [p / total for p in probabilities]
     if isinstance(question, NoulQuestion):
         return NoulAnswer(noul=probabilities[0])
-    confidence = entropy_confidence(probabilities)
+    confidence = margin_confidence(probabilities)
     if isinstance(question, ChoiceQuestion):
         distribution = dict(zip(question.criteria, probabilities, strict=True))
         return ChoiceAnswer(

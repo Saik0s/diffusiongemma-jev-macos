@@ -85,7 +85,21 @@ It does not mean the feature is “half implemented.”
 
 Your code can rank functions by this number or apply a threshold.
 The demos use explicit thresholds as teaching examples, not validated production settings.
-Native Jev also supports separate true/false descriptions; here, put that clarification in `instructions`.
+
+Like native Jev, you can also spell out what each side means with `criteria`.
+Supply both sides or neither:
+
+```json
+{
+  "type": "noul",
+  "instructions": "Does a supplied test exercise the empty-email case?",
+  "criteria": {
+    "true": "A supplied test calls the function with an empty email.",
+    "false": "No supplied test covers that input."
+  }
+}
+```
+
 See the [official Noul definition](https://docs.typesafe.ai/primitives/noul).
 
 ## Choice: pick one of the options you supply
@@ -149,12 +163,12 @@ For example, among many predictions around 0.8, roughly 80% should be true.
 We have not established that property for this model and interface.
 
 Choice and Score also return `confidence`.
-Here it measures how concentrated the distribution is: zero for evenly spread probabilities, one when all weight is on one answer.
+It is the gap between the two highest probabilities: zero when the top two tie, one when all weight is on one answer.
 A confidently wrong answer remains possible. Noul has no separate confidence field.
 
 Use held-out examples from your workflow to choose thresholds.
 Keep a fallback for uncertain answers, failed requests, and missing evidence.
-TypeSafe's [confidence guide](https://docs.typesafe.ai/confidence) describes its own contract; our concentration formula is an implementation choice.
+TypeSafe's [confidence guide](https://docs.typesafe.ai/confidence) describes its own contract; every hosted answer we probed matched this same top-two gap, but TypeSafe does not publish the formula, so the match is observed rather than promised.
 
 ## Asking several questions together
 

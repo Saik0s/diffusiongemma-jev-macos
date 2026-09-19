@@ -93,22 +93,24 @@ See [the official state contract](https://docs.typesafe.ai/concepts/state) and [
 
 ## Exact response differences from native Jev
 
-- **Noul:** the local schema takes the proposition in `instructions`. Native Jev also accepts separate `criteria.true` and `criteria.false` descriptions.
+- **Noul:** the local schema takes the proposition in `instructions`, plus the same optional `criteria.true` and `criteria.false` descriptions native Jev accepts. Locally both sides are required together; supplying neither keeps the default yes/no rubric.
 - **Choice:** this implementation accepts **2–26 alternatives**. TypeSafe documents up to **255**. The returned winner has the highest supplied-label probability.
 - **Score:** this implementation accepts **2–10 ordered descriptions** and evaluates them together. It returns the probability-weighted zero-based index and a legend.
-- **Confidence:** local Choice and Score use the formula below. TypeSafe's public documentation does not specify that exact formula, so numeric equivalence is not claimed. In a hosted probe, every returned confidence matched the gap between the two largest probabilities within rounding; see [the observed comparison](jev-differences.md#probability-meaning).
+- **Confidence:** local Choice and Score return the gap between the two largest probabilities, the formula below. In a hosted probe, all 21 returned confidences matched that quantity within rounding, so the local statistic now follows the observation; see [the observed comparison](jev-differences.md#probability-meaning). TypeSafe does not publish the formula, so the match is inferred, and the probabilities being compared come from a different model.
 - **Rounding and determinism:** hosted answers carried two decimal places, reached exactly 0 and 1, and varied by up to 0.02 between identical requests. Local answers are unrounded and reproducible for a fixed seed on one machine.
 
-For `N` alternatives and probabilities `p`, the local concentration statistic is:
+For probabilities `p`, the local confidence statistic is:
 
 ```text
-H(p) = -sum(p[i] * log(p[i]))
-confidence = 1 - H(p) / log(N)
+ranked = sorted(p, reverse=True)
+confidence = ranked[0] - ranked[1]
 ```
 
-Zero-probability terms contribute zero.
-An even distribution produces confidence zero; all weight on one alternative produces confidence one.
-This quantity measures how concentrated the answer is, not its empirically measured reliability.
+A tie between the two leading answers produces confidence zero; all weight on one alternative produces confidence one.
+Only the leading gap counts, so a distant third alternative does not change it.
+This quantity measures how far ahead the winner is, not its empirically measured reliability.
+Earlier releases returned the entropy concentration `1 - H(p)/log(N)` instead, which is a different number: 0.81/0.19 gave 0.30 there and gives 0.63 here.
+Any threshold tuned against the old value must be re-chosen.
 See the [official confidence guide](https://docs.typesafe.ai/confidence) for the native product's explanation.
 
 ## Where the optimization saves work

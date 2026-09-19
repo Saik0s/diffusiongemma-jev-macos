@@ -95,9 +95,12 @@ No natural-language output is returned. Optional reasoning stays in memory and
 is not included in the response.
 
 - `answers.investigate`: `type` and `noul`, a probability of yes. A threshold such
-  as 0.5 is an application choice, not a reliability guarantee.
+  as 0.5 is an application choice, not a reliability guarantee. A Noul question may
+  add an optional `criteria` object with `true` and `false` descriptions, which
+  replace the default rubric in the prompt. Supply both keys or neither.
 - `answers.next_file`: `type`, `choice`, `probabilities`, and `confidence`.
   `choice` is the highest-probability supplied key; ties use insertion order.
+  `confidence` is the gap between the two highest probabilities.
 - `answers.severity`: `type`, `score`, `probabilities`, `legend`, and `confidence`.
   Levels are zero-based. `score` is the weighted mean, which may differ from the
   most probable level. Probability and legend keys are strings in JSON.
@@ -111,9 +114,12 @@ An `other` candidate can be useful when your list is not exhaustive.
 The optional `options` object accepts:
 
 - `seed`: integer **0–4,294,967,295**, default **0**.
-- `samples`: integer **1–8**, default **1**. Each sample starts from fresh seeded
-  answer-slot noise; the encoded prompt is reused and probabilities are averaged.
-  These are independent single-step reads, not successive denoising steps.
+- `samples`: integer **1–8**. Omitting it uses the server's startup profile,
+  **1** with the default `--profile fast` and **8** with `--profile accuracy`.
+  Each sample starts from fresh seeded answer-slot noise; the encoded prompt is
+  prefilled once per request and reused, so extra samples add decoder passes but
+  not prefill. These are independent single-step reads, not successive denoising
+  steps.
 - `mode`: **`packed`** by default, or `independent`. Packed questions share a
   prompt and canvas. Independent mode runs each question separately. Score levels
   remain a joint choice in either mode.
@@ -181,12 +187,38 @@ scheduler.
 - **503**: model unavailable or inference queue full.
 - **500**: inference failed.
 
-Errors omit request contents. `GET /health` reports service availability;
+Errors omit request contents. `GET /health` reports service availability, the
+model ID, and `prompt_template`, the version of the rendered prompt wording. That
+version changes whenever the prompt text, ordering, or rubric changes, so recorded
+accuracy numbers can be tied to the template that produced them.
 `GET /v1/models` lists the one configured model. There is no chat-completions
 endpoint, authentication, or persistent conversation storage.
 
+## Hosted-shaped route
+
+`POST /api/alpha/decisions` accepts the same questions and returns the hosted
+envelope, `id`, `model`, `provider`, `answers`, `usage`, so a client written
+against hosted Jev needs one changed field and a base URL:
+
+```bash
+curl -s http://127.0.0.1:8017/api/alpha/decisions \
+  -H 'content-type: application/json' \
+  -d '{"model":"diffusiongemma-local","state":{"note":"ok"},
+       "questions":{"q":{"type":"noul","instructions":"Is the note fine?"}}}'
+```
+
+This route follows the hosted contract where it differs from the native local
+one: a scalar `state` root is rejected, and failures return **400** with
+`{"error_code", "error_summary"}`. `id` is a fresh random identifier per response;
+the server keeps no log to correlate it with. `usage` reports `input_tokens`,
+`output_tokens`, and `cost`. `provider` is `"local"`, `cost` is `0.0` because
+nothing is billed, and `output_tokens` counts one read label per question, which
+is not the hosted token count. Only `diffusiongemma-local` is accepted. The
+answers come from DiffusionGemma, so matching the envelope does not mean matching
+Jev's quality; `/v1/systemone` remains the route with local `usage` timings.
+
 The [research notes](research.md) distinguish this API subset from native Jev.
 Compared with the hosted Jev endpoint, the local API returns unrounded
-probabilities, a different `confidence` statistic, a local `usage` object, and
-422 rather than 400 for validation errors; it also accepts numeric and boolean
-`state` roots that the hosted API rejects. See [the observed differences](jev-differences.md#wire-format).
+probabilities and a local `usage` object on `/v1/systemone`, which also returns
+422 rather than 400 for validation errors and accepts numeric and boolean `state`
+roots that the hosted API rejects. See [the observed differences](jev-differences.md#wire-format).

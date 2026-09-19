@@ -7,6 +7,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from diffusion_jev.api import MAX_ADMITTED_REQUESTS, MAX_BODY_BYTES, create_app
+from diffusion_jev.canvas import PROMPT_TEMPLATE_VERSION
+from diffusion_jev.compat import COMPAT_PATH, CompatResponse
 from diffusion_jev.schemas import DecisionRequest, DecisionResponse, NoulAnswer, Usage
 
 BODY = '{"state":null,"questions":{"q":{"type":"noul","instructions":"Check"}}}'
@@ -37,7 +39,11 @@ def client() -> Iterator[TestClient]:
 
 
 def test_routes(client: TestClient) -> None:
-    assert client.get("/health").json() == {"status": "ok", "model": "diffusiongemma-local"}
+    assert client.get("/health").json() == {
+        "status": "ok",
+        "model": "diffusiongemma-local",
+        "prompt_template": PROMPT_TEMPLATE_VERSION,
+    }
     assert client.get("/v1/models").json()["data"][0]["id"] == "diffusiongemma-local"
     response = client.post("/v1/systemone", content=BODY, headers=HEADERS)
     assert response.status_code == 200
@@ -196,3 +202,53 @@ def test_inference_requires_completed_startup() -> None:
             assert response.json() == {"detail": "Model is not ready"}
 
     asyncio.run(scenario())
+
+
+def test_compat_route_returns_the_hosted_envelope(client: TestClient) -> None:
+    body = BODY.replace('"state":null', '"state":{"note":"ok"}')
+    response = client.post(COMPAT_PATH, content=body, headers=HEADERS)
+    assert response.status_code == 200
+    parsed = CompatResponse.model_validate_json(response.content)
+    assert parsed.model == "diffusiongemma-local"
+    assert parsed.provider == "local"
+    assert parsed.answers["q"] == NoulAnswer(noul=0.5)
+    # Local inference is not billed, and one label position is read per question.
+    assert parsed.usage.cost == 0.0
+    assert parsed.usage.output_tokens == 1
+    assert parsed.usage.input_tokens == 10
+    # Hosted responses carry an opaque id; the local one is fresh per response.
+    assert parsed.id.startswith("decision-")
+    second = CompatResponse.model_validate_json(
+        client.post(COMPAT_PATH, content=body, headers=HEADERS).content
+    )
+    assert second.id != parsed.id
+
+
+def test_compat_route_rejects_a_scalar_state(client: TestClient) -> None:
+    # Hosted Jev refuses a bare scalar root, so the compat shape refuses it too.
+    response = client.post(COMPAT_PATH, content=BODY, headers=HEADERS)
+    assert response.status_code == 400
+
+
+@pytest.mark.parametrize(
+    "content,status",
+    [('{"secret":"PRIVATE"}', 400), (b"x" * (MAX_BODY_BYTES + 1), 413)],
+)
+def test_compat_errors_use_the_hosted_shape(
+    client: TestClient, content: str | bytes, status: int
+) -> None:
+    response = client.post(COMPAT_PATH, content=content, headers=HEADERS)
+    assert response.status_code == status
+    payload = response.json()
+    assert payload["error_code"] == status
+    assert isinstance(payload["error_summary"], str)
+    assert "PRIVATE" not in response.text
+
+
+def test_compat_route_reports_engine_failures_as_400() -> None:
+    body = BODY.replace('"state":null', '"state":{"note":"ok"}')
+    with TestClient(create_app(lambda: FakeEngine(ValueError("PRIVATE")))) as client:
+        response = client.post(COMPAT_PATH, content=body, headers=HEADERS)
+    assert response.status_code == 400
+    assert response.json()["error_code"] == 400
+    assert "PRIVATE" not in response.text

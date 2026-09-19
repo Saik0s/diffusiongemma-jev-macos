@@ -1,0 +1,3571 @@
+{
+ "schema_version": 2,
+ "frozen_at": "2026-09-19",
+ "purpose": "Frozen matched decision suite. The same states, instructions, criteria and option keys are replayed against the local DiffusionGemma adapter and compared with the hosted answers recorded in the probe. Frozen before any local outcome was measured.",
+ "content_note": "All states, events, posts, and boards are synthetic and were written for this probe. No user data.",
+ "source": {
+  "artifact": "benchmarks/openrouter-jev-1.13-probe-2026-09-19.json",
+  "derivation": "Every successful probe request is carried over verbatim; the model field is dropped because it differs per target, and no options were sent, so each side uses its own documented defaults."
+ },
+ "hosted": {
+  "endpoint": "https://openrouter.ai/api/alpha/decisions",
+  "requested_model": "typesafe/jev-1.13",
+  "resolved_model": "typesafe/jev-1.13-20260917",
+  "measured_at": "2026-09-19",
+  "client_note": "Apple Silicon Mac on a residential connection; latency includes network transport",
+  "latency_note": "Hosted latency includes network transport and OpenRouter's proxy. It is not comparable with local inference time without separating those."
+ },
+ "labels": {
+  "grid": "Derived mechanically from the state and the question's own rule: among moves marked legal, the smaller manhattan_to_target wins, and equal distances accept either key. No answer was labelled by hand and the hosted answers were not used as the label.",
+  "checkout_and_feed": "No ground truth. These cases are compared for agreement with the hosted answer and for internal stability, never scored as accuracy.",
+  "coverage": "6 of 20 grid cases have a single correct key; the rest are genuine distance ties, and the cadence repeats are the same tied state sent several times, so grid accuracy is a weak signal. The tag grid/both_closer_down_better names a preference the stated rule does not express: both moves reach distance 4, so both keys are accepted."
+ },
+ "cases": [
+  {
+   "tag": "checkout/struggling",
+   "request": {
+    "state": [
+     {
+      "t": "00:00.0",
+      "event": "checkout_opened",
+      "cart_total": "84.00",
+      "logged_in": false
+     },
+     {
+      "t": "00:04.2",
+      "event": "field_typed",
+      "field": "email"
+     },
+     {
+      "t": "00:21.9",
+      "event": "field_typed",
+      "field": "address_line1"
+     },
+     {
+      "t": "00:40.3",
+      "event": "field_typed",
+      "field": "city"
+     },
+     {
+      "t": "00:52.7",
+      "event": "shipping_selected",
+      "option": "standard"
+     },
+     {
+      "t": "01:03.1",
+      "event": "field_typed",
+      "field": "promo_code",
+      "value_len": 8
+     },
+     {
+      "t": "01:05.0",
+      "event": "promo_apply_clicked"
+     },
+     {
+      "t": "01:05.6",
+      "event": "promo_error",
+      "message": "Code not recognized"
+     },
+     {
+      "t": "01:12.4",
+      "event": "field_edited",
+      "field": "promo_code",
+      "value_len": 9
+     },
+     {
+      "t": "01:13.8",
+      "event": "promo_apply_clicked"
+     },
+     {
+      "t": "01:14.3",
+      "event": "promo_error",
+      "message": "Code not recognized"
+     },
+     {
+      "t": "01:20.0",
+      "event": "tab_blur"
+     },
+     {
+      "t": "01:47.5",
+      "event": "tab_focus"
+     },
+     {
+      "t": "01:49.9",
+      "event": "field_edited",
+      "field": "promo_code",
+      "value_len": 10
+     },
+     {
+      "t": "01:51.2",
+      "event": "promo_apply_clicked"
+     },
+     {
+      "t": "01:51.8",
+      "event": "promo_error",
+      "message": "Code expired"
+     },
+     {
+      "t": "01:58.0",
+      "event": "cursor_hover",
+      "target": "back_to_cart"
+     },
+     {
+      "t": "02:31.4",
+      "event": "idle",
+      "seconds": 33
+     }
+    ],
+    "questions": {
+     "promo": {
+      "type": "noul",
+      "instructions": "Is the shopper having trouble applying a promo code?",
+      "criteria": {
+       "true": "The shopper entered or edited a promo code more than once, saw a promo error, or kept returning to the promo field.",
+       "false": "No promo code activity, or a single successful promo apply."
+      }
+     },
+     "quit": {
+      "type": "noul",
+      "instructions": "Is the shopper about to leave checkout without paying?",
+      "criteria": {
+       "true": "Long idle gaps late in the form, repeated back navigation, clearing fields, or hovering the close/cart link after errors.",
+       "false": "Steady forward progress through the form with recent activity."
+      }
+     },
+     "fraud": {
+      "type": "noul",
+      "instructions": "Does this look like card testing or fraud rather than a normal purchase?",
+      "criteria": {
+       "true": "Many different card numbers tried in quick succession, repeated declines, or mismatched billing details changed rapidly.",
+       "false": "One or two card attempts with consistent identity details."
+      }
+     },
+     "ready": {
+      "type": "noul",
+      "instructions": "Is the shopper ready to pay right now?",
+      "criteria": {
+       "true": "Every required field is complete, payment details entered, and the shopper is on or focusing the pay button.",
+       "false": "Required fields are still missing or the shopper is still editing."
+      }
+     },
+     "shipping": {
+      "type": "noul",
+      "instructions": "Is the shopper uncertain about which shipping option to choose?",
+      "criteria": {
+       "true": "The shipping option was changed more than once, or the shopper spent a long time on the shipping step, opening delivery details.",
+       "false": "Shipping chosen once without revisiting."
+      }
+     },
+     "help": {
+      "type": "noul",
+      "instructions": "Would offering live chat help this shopper complete the purchase?",
+      "criteria": {
+       "true": "The shopper hit errors or confusion they have not resolved after several attempts and is still on the page.",
+       "false": "The shopper is progressing normally or has already resolved the issue."
+      }
+     },
+     "comparing": {
+      "type": "noul",
+      "instructions": "Is the shopper comparing this purchase with other stores right now?",
+      "criteria": {
+       "true": "Repeated tab blur/focus cycles around price or shipping information, or copying the product name or total.",
+       "false": "No tab switching or copying; attention stays on the form."
+      }
+     },
+     "returning": {
+      "type": "noul",
+      "instructions": "Is this a returning customer?",
+      "criteria": {
+       "true": "Address or card autofilled from a saved profile, a logged-in session, or fields completed almost instantly.",
+       "false": "Every field typed manually with no saved profile signals."
+      }
+     }
+    }
+   },
+   "expected": null,
+   "hosted": {
+    "answers": {
+     "promo": {
+      "type": "noul",
+      "noul": 0.98
+     },
+     "quit": {
+      "type": "noul",
+      "noul": 0.74
+     },
+     "fraud": {
+      "type": "noul",
+      "noul": 0.07
+     },
+     "ready": {
+      "type": "noul",
+      "noul": 0.04
+     },
+     "shipping": {
+      "type": "noul",
+      "noul": 0.05
+     },
+     "help": {
+      "type": "noul",
+      "noul": 0.79
+     },
+     "comparing": {
+      "type": "noul",
+      "noul": 0.3
+     },
+     "returning": {
+      "type": "noul",
+      "noul": 0.09
+     }
+    },
+    "usage": {
+     "input_tokens": 1399,
+     "output_tokens": 137,
+     "cost": 5.8758e-05
+    },
+    "latency_s": 0.5361
+   }
+  },
+  {
+   "tag": "checkout/ready",
+   "request": {
+    "state": [
+     {
+      "t": "00:00.0",
+      "event": "checkout_opened",
+      "cart_total": "129.50",
+      "logged_in": true
+     },
+     {
+      "t": "00:00.8",
+      "event": "autofill",
+      "fields": [
+       "email",
+       "address_line1",
+       "city",
+       "postal_code"
+      ]
+     },
+     {
+      "t": "00:03.1",
+      "event": "shipping_selected",
+      "option": "express"
+     },
+     {
+      "t": "00:05.4",
+      "event": "autofill",
+      "fields": [
+       "card_number",
+       "card_expiry"
+      ]
+     },
+     {
+      "t": "00:09.0",
+      "event": "field_typed",
+      "field": "card_cvc"
+     },
+     {
+      "t": "00:10.2",
+      "event": "form_valid",
+      "missing_fields": []
+     },
+     {
+      "t": "00:10.9",
+      "event": "focus",
+      "target": "pay_button"
+     }
+    ],
+    "questions": {
+     "promo": {
+      "type": "noul",
+      "instructions": "Is the shopper having trouble applying a promo code?",
+      "criteria": {
+       "true": "The shopper entered or edited a promo code more than once, saw a promo error, or kept returning to the promo field.",
+       "false": "No promo code activity, or a single successful promo apply."
+      }
+     },
+     "quit": {
+      "type": "noul",
+      "instructions": "Is the shopper about to leave checkout without paying?",
+      "criteria": {
+       "true": "Long idle gaps late in the form, repeated back navigation, clearing fields, or hovering the close/cart link after errors.",
+       "false": "Steady forward progress through the form with recent activity."
+      }
+     },
+     "fraud": {
+      "type": "noul",
+      "instructions": "Does this look like card testing or fraud rather than a normal purchase?",
+      "criteria": {
+       "true": "Many different card numbers tried in quick succession, repeated declines, or mismatched billing details changed rapidly.",
+       "false": "One or two card attempts with consistent identity details."
+      }
+     },
+     "ready": {
+      "type": "noul",
+      "instructions": "Is the shopper ready to pay right now?",
+      "criteria": {
+       "true": "Every required field is complete, payment details entered, and the shopper is on or focusing the pay button.",
+       "false": "Required fields are still missing or the shopper is still editing."
+      }
+     },
+     "shipping": {
+      "type": "noul",
+      "instructions": "Is the shopper uncertain about which shipping option to choose?",
+      "criteria": {
+       "true": "The shipping option was changed more than once, or the shopper spent a long time on the shipping step, opening delivery details.",
+       "false": "Shipping chosen once without revisiting."
+      }
+     },
+     "help": {
+      "type": "noul",
+      "instructions": "Would offering live chat help this shopper complete the purchase?",
+      "criteria": {
+       "true": "The shopper hit errors or confusion they have not resolved after several attempts and is still on the page.",
+       "false": "The shopper is progressing normally or has already resolved the issue."
+      }
+     },
+     "comparing": {
+      "type": "noul",
+      "instructions": "Is the shopper comparing this purchase with other stores right now?",
+      "criteria": {
+       "true": "Repeated tab blur/focus cycles around price or shipping information, or copying the product name or total.",
+       "false": "No tab switching or copying; attention stays on the form."
+      }
+     },
+     "returning": {
+      "type": "noul",
+      "instructions": "Is this a returning customer?",
+      "criteria": {
+       "true": "Address or card autofilled from a saved profile, a logged-in session, or fields completed almost instantly.",
+       "false": "Every field typed manually with no saved profile signals."
+      }
+     }
+    }
+   },
+   "expected": null,
+   "hosted": {
+    "answers": {
+     "promo": {
+      "type": "noul",
+      "noul": 0.03
+     },
+     "quit": {
+      "type": "noul",
+      "noul": 0.06
+     },
+     "fraud": {
+      "type": "noul",
+      "noul": 0.05
+     },
+     "ready": {
+      "type": "noul",
+      "noul": 0.96
+     },
+     "shipping": {
+      "type": "noul",
+      "noul": 0.05
+     },
+     "help": {
+      "type": "noul",
+      "noul": 0.07
+     },
+     "comparing": {
+      "type": "noul",
+      "noul": 0.04
+     },
+     "returning": {
+      "type": "noul",
+      "noul": 0.92
+     }
+    },
+    "usage": {
+     "input_tokens": 1066,
+     "output_tokens": 137,
+     "cost": 4.4772e-05
+    },
+    "latency_s": 1.4996
+   }
+  },
+  {
+   "tag": "checkout/card_testing",
+   "request": {
+    "state": [
+     {
+      "t": "00:00.0",
+      "event": "checkout_opened",
+      "cart_total": "1.00",
+      "logged_in": false
+     },
+     {
+      "t": "00:01.1",
+      "event": "paste",
+      "field": "card_number"
+     },
+     {
+      "t": "00:02.0",
+      "event": "pay_clicked"
+     },
+     {
+      "t": "00:02.6",
+      "event": "payment_declined",
+      "code": "do_not_honor"
+     },
+     {
+      "t": "00:04.0",
+      "event": "paste",
+      "field": "card_number"
+     },
+     {
+      "t": "00:04.7",
+      "event": "pay_clicked"
+     },
+     {
+      "t": "00:05.3",
+      "event": "payment_declined",
+      "code": "invalid_cvc"
+     },
+     {
+      "t": "00:06.4",
+      "event": "paste",
+      "field": "card_number"
+     },
+     {
+      "t": "00:06.9",
+      "event": "field_edited",
+      "field": "billing_name"
+     },
+     {
+      "t": "00:07.5",
+      "event": "pay_clicked"
+     },
+     {
+      "t": "00:08.1",
+      "event": "payment_declined",
+      "code": "do_not_honor"
+     },
+     {
+      "t": "00:09.2",
+      "event": "paste",
+      "field": "card_number"
+     },
+     {
+      "t": "00:09.8",
+      "event": "pay_clicked"
+     },
+     {
+      "t": "00:10.3",
+      "event": "payment_declined",
+      "code": "insufficient_funds"
+     }
+    ],
+    "questions": {
+     "promo": {
+      "type": "noul",
+      "instructions": "Is the shopper having trouble applying a promo code?",
+      "criteria": {
+       "true": "The shopper entered or edited a promo code more than once, saw a promo error, or kept returning to the promo field.",
+       "false": "No promo code activity, or a single successful promo apply."
+      }
+     },
+     "quit": {
+      "type": "noul",
+      "instructions": "Is the shopper about to leave checkout without paying?",
+      "criteria": {
+       "true": "Long idle gaps late in the form, repeated back navigation, clearing fields, or hovering the close/cart link after errors.",
+       "false": "Steady forward progress through the form with recent activity."
+      }
+     },
+     "fraud": {
+      "type": "noul",
+      "instructions": "Does this look like card testing or fraud rather than a normal purchase?",
+      "criteria": {
+       "true": "Many different card numbers tried in quick succession, repeated declines, or mismatched billing details changed rapidly.",
+       "false": "One or two card attempts with consistent identity details."
+      }
+     },
+     "ready": {
+      "type": "noul",
+      "instructions": "Is the shopper ready to pay right now?",
+      "criteria": {
+       "true": "Every required field is complete, payment details entered, and the shopper is on or focusing the pay button.",
+       "false": "Required fields are still missing or the shopper is still editing."
+      }
+     },
+     "shipping": {
+      "type": "noul",
+      "instructions": "Is the shopper uncertain about which shipping option to choose?",
+      "criteria": {
+       "true": "The shipping option was changed more than once, or the shopper spent a long time on the shipping step, opening delivery details.",
+       "false": "Shipping chosen once without revisiting."
+      }
+     },
+     "help": {
+      "type": "noul",
+      "instructions": "Would offering live chat help this shopper complete the purchase?",
+      "criteria": {
+       "true": "The shopper hit errors or confusion they have not resolved after several attempts and is still on the page.",
+       "false": "The shopper is progressing normally or has already resolved the issue."
+      }
+     },
+     "comparing": {
+      "type": "noul",
+      "instructions": "Is the shopper comparing this purchase with other stores right now?",
+      "criteria": {
+       "true": "Repeated tab blur/focus cycles around price or shipping information, or copying the product name or total.",
+       "false": "No tab switching or copying; attention stays on the form."
+      }
+     },
+     "returning": {
+      "type": "noul",
+      "instructions": "Is this a returning customer?",
+      "criteria": {
+       "true": "Address or card autofilled from a saved profile, a logged-in session, or fields completed almost instantly.",
+       "false": "Every field typed manually with no saved profile signals."
+      }
+     }
+    }
+   },
+   "expected": null,
+   "hosted": {
+    "answers": {
+     "promo": {
+      "type": "noul",
+      "noul": 0.02
+     },
+     "quit": {
+      "type": "noul",
+      "noul": 0.24
+     },
+     "fraud": {
+      "type": "noul",
+      "noul": 0.9
+     },
+     "ready": {
+      "type": "noul",
+      "noul": 0.28
+     },
+     "shipping": {
+      "type": "noul",
+      "noul": 0.03
+     },
+     "help": {
+      "type": "noul",
+      "noul": 0.85
+     },
+     "comparing": {
+      "type": "noul",
+      "noul": 0.05
+     },
+     "returning": {
+      "type": "noul",
+      "noul": 0.31
+     }
+    },
+    "usage": {
+     "input_tokens": 1251,
+     "output_tokens": 137,
+     "cost": 5.2542e-05
+    },
+    "latency_s": 0.4453
+   }
+  },
+  {
+   "tag": "checkout/struggling/repeat1",
+   "request": {
+    "state": [
+     {
+      "t": "00:00.0",
+      "event": "checkout_opened",
+      "cart_total": "84.00",
+      "logged_in": false
+     },
+     {
+      "t": "00:04.2",
+      "event": "field_typed",
+      "field": "email"
+     },
+     {
+      "t": "00:21.9",
+      "event": "field_typed",
+      "field": "address_line1"
+     },
+     {
+      "t": "00:40.3",
+      "event": "field_typed",
+      "field": "city"
+     },
+     {
+      "t": "00:52.7",
+      "event": "shipping_selected",
+      "option": "standard"
+     },
+     {
+      "t": "01:03.1",
+      "event": "field_typed",
+      "field": "promo_code",
+      "value_len": 8
+     },
+     {
+      "t": "01:05.0",
+      "event": "promo_apply_clicked"
+     },
+     {
+      "t": "01:05.6",
+      "event": "promo_error",
+      "message": "Code not recognized"
+     },
+     {
+      "t": "01:12.4",
+      "event": "field_edited",
+      "field": "promo_code",
+      "value_len": 9
+     },
+     {
+      "t": "01:13.8",
+      "event": "promo_apply_clicked"
+     },
+     {
+      "t": "01:14.3",
+      "event": "promo_error",
+      "message": "Code not recognized"
+     },
+     {
+      "t": "01:20.0",
+      "event": "tab_blur"
+     },
+     {
+      "t": "01:47.5",
+      "event": "tab_focus"
+     },
+     {
+      "t": "01:49.9",
+      "event": "field_edited",
+      "field": "promo_code",
+      "value_len": 10
+     },
+     {
+      "t": "01:51.2",
+      "event": "promo_apply_clicked"
+     },
+     {
+      "t": "01:51.8",
+      "event": "promo_error",
+      "message": "Code expired"
+     },
+     {
+      "t": "01:58.0",
+      "event": "cursor_hover",
+      "target": "back_to_cart"
+     },
+     {
+      "t": "02:31.4",
+      "event": "idle",
+      "seconds": 33
+     }
+    ],
+    "questions": {
+     "promo": {
+      "type": "noul",
+      "instructions": "Is the shopper having trouble applying a promo code?",
+      "criteria": {
+       "true": "The shopper entered or edited a promo code more than once, saw a promo error, or kept returning to the promo field.",
+       "false": "No promo code activity, or a single successful promo apply."
+      }
+     },
+     "quit": {
+      "type": "noul",
+      "instructions": "Is the shopper about to leave checkout without paying?",
+      "criteria": {
+       "true": "Long idle gaps late in the form, repeated back navigation, clearing fields, or hovering the close/cart link after errors.",
+       "false": "Steady forward progress through the form with recent activity."
+      }
+     },
+     "fraud": {
+      "type": "noul",
+      "instructions": "Does this look like card testing or fraud rather than a normal purchase?",
+      "criteria": {
+       "true": "Many different card numbers tried in quick succession, repeated declines, or mismatched billing details changed rapidly.",
+       "false": "One or two card attempts with consistent identity details."
+      }
+     },
+     "ready": {
+      "type": "noul",
+      "instructions": "Is the shopper ready to pay right now?",
+      "criteria": {
+       "true": "Every required field is complete, payment details entered, and the shopper is on or focusing the pay button.",
+       "false": "Required fields are still missing or the shopper is still editing."
+      }
+     },
+     "shipping": {
+      "type": "noul",
+      "instructions": "Is the shopper uncertain about which shipping option to choose?",
+      "criteria": {
+       "true": "The shipping option was changed more than once, or the shopper spent a long time on the shipping step, opening delivery details.",
+       "false": "Shipping chosen once without revisiting."
+      }
+     },
+     "help": {
+      "type": "noul",
+      "instructions": "Would offering live chat help this shopper complete the purchase?",
+      "criteria": {
+       "true": "The shopper hit errors or confusion they have not resolved after several attempts and is still on the page.",
+       "false": "The shopper is progressing normally or has already resolved the issue."
+      }
+     },
+     "comparing": {
+      "type": "noul",
+      "instructions": "Is the shopper comparing this purchase with other stores right now?",
+      "criteria": {
+       "true": "Repeated tab blur/focus cycles around price or shipping information, or copying the product name or total.",
+       "false": "No tab switching or copying; attention stays on the form."
+      }
+     },
+     "returning": {
+      "type": "noul",
+      "instructions": "Is this a returning customer?",
+      "criteria": {
+       "true": "Address or card autofilled from a saved profile, a logged-in session, or fields completed almost instantly.",
+       "false": "Every field typed manually with no saved profile signals."
+      }
+     }
+    }
+   },
+   "expected": null,
+   "hosted": {
+    "answers": {
+     "promo": {
+      "type": "noul",
+      "noul": 0.99
+     },
+     "quit": {
+      "type": "noul",
+      "noul": 0.75
+     },
+     "fraud": {
+      "type": "noul",
+      "noul": 0.06
+     },
+     "ready": {
+      "type": "noul",
+      "noul": 0.04
+     },
+     "shipping": {
+      "type": "noul",
+      "noul": 0.05
+     },
+     "help": {
+      "type": "noul",
+      "noul": 0.79
+     },
+     "comparing": {
+      "type": "noul",
+      "noul": 0.32
+     },
+     "returning": {
+      "type": "noul",
+      "noul": 0.09
+     }
+    },
+    "usage": {
+     "input_tokens": 1399,
+     "output_tokens": 137,
+     "cost": 5.8758e-05
+    },
+    "latency_s": 0.4026
+   }
+  },
+  {
+   "tag": "checkout/struggling/repeat2",
+   "request": {
+    "state": [
+     {
+      "t": "00:00.0",
+      "event": "checkout_opened",
+      "cart_total": "84.00",
+      "logged_in": false
+     },
+     {
+      "t": "00:04.2",
+      "event": "field_typed",
+      "field": "email"
+     },
+     {
+      "t": "00:21.9",
+      "event": "field_typed",
+      "field": "address_line1"
+     },
+     {
+      "t": "00:40.3",
+      "event": "field_typed",
+      "field": "city"
+     },
+     {
+      "t": "00:52.7",
+      "event": "shipping_selected",
+      "option": "standard"
+     },
+     {
+      "t": "01:03.1",
+      "event": "field_typed",
+      "field": "promo_code",
+      "value_len": 8
+     },
+     {
+      "t": "01:05.0",
+      "event": "promo_apply_clicked"
+     },
+     {
+      "t": "01:05.6",
+      "event": "promo_error",
+      "message": "Code not recognized"
+     },
+     {
+      "t": "01:12.4",
+      "event": "field_edited",
+      "field": "promo_code",
+      "value_len": 9
+     },
+     {
+      "t": "01:13.8",
+      "event": "promo_apply_clicked"
+     },
+     {
+      "t": "01:14.3",
+      "event": "promo_error",
+      "message": "Code not recognized"
+     },
+     {
+      "t": "01:20.0",
+      "event": "tab_blur"
+     },
+     {
+      "t": "01:47.5",
+      "event": "tab_focus"
+     },
+     {
+      "t": "01:49.9",
+      "event": "field_edited",
+      "field": "promo_code",
+      "value_len": 10
+     },
+     {
+      "t": "01:51.2",
+      "event": "promo_apply_clicked"
+     },
+     {
+      "t": "01:51.8",
+      "event": "promo_error",
+      "message": "Code expired"
+     },
+     {
+      "t": "01:58.0",
+      "event": "cursor_hover",
+      "target": "back_to_cart"
+     },
+     {
+      "t": "02:31.4",
+      "event": "idle",
+      "seconds": 33
+     }
+    ],
+    "questions": {
+     "promo": {
+      "type": "noul",
+      "instructions": "Is the shopper having trouble applying a promo code?",
+      "criteria": {
+       "true": "The shopper entered or edited a promo code more than once, saw a promo error, or kept returning to the promo field.",
+       "false": "No promo code activity, or a single successful promo apply."
+      }
+     },
+     "quit": {
+      "type": "noul",
+      "instructions": "Is the shopper about to leave checkout without paying?",
+      "criteria": {
+       "true": "Long idle gaps late in the form, repeated back navigation, clearing fields, or hovering the close/cart link after errors.",
+       "false": "Steady forward progress through the form with recent activity."
+      }
+     },
+     "fraud": {
+      "type": "noul",
+      "instructions": "Does this look like card testing or fraud rather than a normal purchase?",
+      "criteria": {
+       "true": "Many different card numbers tried in quick succession, repeated declines, or mismatched billing details changed rapidly.",
+       "false": "One or two card attempts with consistent identity details."
+      }
+     },
+     "ready": {
+      "type": "noul",
+      "instructions": "Is the shopper ready to pay right now?",
+      "criteria": {
+       "true": "Every required field is complete, payment details entered, and the shopper is on or focusing the pay button.",
+       "false": "Required fields are still missing or the shopper is still editing."
+      }
+     },
+     "shipping": {
+      "type": "noul",
+      "instructions": "Is the shopper uncertain about which shipping option to choose?",
+      "criteria": {
+       "true": "The shipping option was changed more than once, or the shopper spent a long time on the shipping step, opening delivery details.",
+       "false": "Shipping chosen once without revisiting."
+      }
+     },
+     "help": {
+      "type": "noul",
+      "instructions": "Would offering live chat help this shopper complete the purchase?",
+      "criteria": {
+       "true": "The shopper hit errors or confusion they have not resolved after several attempts and is still on the page.",
+       "false": "The shopper is progressing normally or has already resolved the issue."
+      }
+     },
+     "comparing": {
+      "type": "noul",
+      "instructions": "Is the shopper comparing this purchase with other stores right now?",
+      "criteria": {
+       "true": "Repeated tab blur/focus cycles around price or shipping information, or copying the product name or total.",
+       "false": "No tab switching or copying; attention stays on the form."
+      }
+     },
+     "returning": {
+      "type": "noul",
+      "instructions": "Is this a returning customer?",
+      "criteria": {
+       "true": "Address or card autofilled from a saved profile, a logged-in session, or fields completed almost instantly.",
+       "false": "Every field typed manually with no saved profile signals."
+      }
+     }
+    }
+   },
+   "expected": null,
+   "hosted": {
+    "answers": {
+     "promo": {
+      "type": "noul",
+      "noul": 0.98
+     },
+     "quit": {
+      "type": "noul",
+      "noul": 0.75
+     },
+     "fraud": {
+      "type": "noul",
+      "noul": 0.07
+     },
+     "ready": {
+      "type": "noul",
+      "noul": 0.04
+     },
+     "shipping": {
+      "type": "noul",
+      "noul": 0.06
+     },
+     "help": {
+      "type": "noul",
+      "noul": 0.79
+     },
+     "comparing": {
+      "type": "noul",
+      "noul": 0.3
+     },
+     "returning": {
+      "type": "noul",
+      "noul": 0.09
+     }
+    },
+    "usage": {
+     "input_tokens": 1399,
+     "output_tokens": 137,
+     "cost": 5.8758e-05
+    },
+    "latency_s": 0.3324
+   }
+  },
+  {
+   "tag": "checkout/struggling/promo_alone",
+   "request": {
+    "state": [
+     {
+      "t": "00:00.0",
+      "event": "checkout_opened",
+      "cart_total": "84.00",
+      "logged_in": false
+     },
+     {
+      "t": "00:04.2",
+      "event": "field_typed",
+      "field": "email"
+     },
+     {
+      "t": "00:21.9",
+      "event": "field_typed",
+      "field": "address_line1"
+     },
+     {
+      "t": "00:40.3",
+      "event": "field_typed",
+      "field": "city"
+     },
+     {
+      "t": "00:52.7",
+      "event": "shipping_selected",
+      "option": "standard"
+     },
+     {
+      "t": "01:03.1",
+      "event": "field_typed",
+      "field": "promo_code",
+      "value_len": 8
+     },
+     {
+      "t": "01:05.0",
+      "event": "promo_apply_clicked"
+     },
+     {
+      "t": "01:05.6",
+      "event": "promo_error",
+      "message": "Code not recognized"
+     },
+     {
+      "t": "01:12.4",
+      "event": "field_edited",
+      "field": "promo_code",
+      "value_len": 9
+     },
+     {
+      "t": "01:13.8",
+      "event": "promo_apply_clicked"
+     },
+     {
+      "t": "01:14.3",
+      "event": "promo_error",
+      "message": "Code not recognized"
+     },
+     {
+      "t": "01:20.0",
+      "event": "tab_blur"
+     },
+     {
+      "t": "01:47.5",
+      "event": "tab_focus"
+     },
+     {
+      "t": "01:49.9",
+      "event": "field_edited",
+      "field": "promo_code",
+      "value_len": 10
+     },
+     {
+      "t": "01:51.2",
+      "event": "promo_apply_clicked"
+     },
+     {
+      "t": "01:51.8",
+      "event": "promo_error",
+      "message": "Code expired"
+     },
+     {
+      "t": "01:58.0",
+      "event": "cursor_hover",
+      "target": "back_to_cart"
+     },
+     {
+      "t": "02:31.4",
+      "event": "idle",
+      "seconds": 33
+     }
+    ],
+    "questions": {
+     "promo": {
+      "type": "noul",
+      "instructions": "Is the shopper having trouble applying a promo code?",
+      "criteria": {
+       "true": "The shopper entered or edited a promo code more than once, saw a promo error, or kept returning to the promo field.",
+       "false": "No promo code activity, or a single successful promo apply."
+      }
+     }
+    }
+   },
+   "expected": null,
+   "hosted": {
+    "answers": {
+     "promo": {
+      "type": "noul",
+      "noul": 0.99
+     }
+    },
+    "usage": {
+     "input_tokens": 938,
+     "output_tokens": 20,
+     "cost": 3.9396e-05
+    },
+    "latency_s": 0.6318
+   }
+  },
+  {
+   "tag": "checkout/struggling/help_alone",
+   "request": {
+    "state": [
+     {
+      "t": "00:00.0",
+      "event": "checkout_opened",
+      "cart_total": "84.00",
+      "logged_in": false
+     },
+     {
+      "t": "00:04.2",
+      "event": "field_typed",
+      "field": "email"
+     },
+     {
+      "t": "00:21.9",
+      "event": "field_typed",
+      "field": "address_line1"
+     },
+     {
+      "t": "00:40.3",
+      "event": "field_typed",
+      "field": "city"
+     },
+     {
+      "t": "00:52.7",
+      "event": "shipping_selected",
+      "option": "standard"
+     },
+     {
+      "t": "01:03.1",
+      "event": "field_typed",
+      "field": "promo_code",
+      "value_len": 8
+     },
+     {
+      "t": "01:05.0",
+      "event": "promo_apply_clicked"
+     },
+     {
+      "t": "01:05.6",
+      "event": "promo_error",
+      "message": "Code not recognized"
+     },
+     {
+      "t": "01:12.4",
+      "event": "field_edited",
+      "field": "promo_code",
+      "value_len": 9
+     },
+     {
+      "t": "01:13.8",
+      "event": "promo_apply_clicked"
+     },
+     {
+      "t": "01:14.3",
+      "event": "promo_error",
+      "message": "Code not recognized"
+     },
+     {
+      "t": "01:20.0",
+      "event": "tab_blur"
+     },
+     {
+      "t": "01:47.5",
+      "event": "tab_focus"
+     },
+     {
+      "t": "01:49.9",
+      "event": "field_edited",
+      "field": "promo_code",
+      "value_len": 10
+     },
+     {
+      "t": "01:51.2",
+      "event": "promo_apply_clicked"
+     },
+     {
+      "t": "01:51.8",
+      "event": "promo_error",
+      "message": "Code expired"
+     },
+     {
+      "t": "01:58.0",
+      "event": "cursor_hover",
+      "target": "back_to_cart"
+     },
+     {
+      "t": "02:31.4",
+      "event": "idle",
+      "seconds": 33
+     }
+    ],
+    "questions": {
+     "help": {
+      "type": "noul",
+      "instructions": "Would offering live chat help this shopper complete the purchase?",
+      "criteria": {
+       "true": "The shopper hit errors or confusion they have not resolved after several attempts and is still on the page.",
+       "false": "The shopper is progressing normally or has already resolved the issue."
+      }
+     }
+    }
+   },
+   "expected": null,
+   "hosted": {
+    "answers": {
+     "help": {
+      "type": "noul",
+      "noul": 0.79
+     }
+    },
+    "usage": {
+     "input_tokens": 934,
+     "output_tokens": 20,
+     "cost": 3.9228e-05
+    },
+    "latency_s": 0.3237
+   }
+  },
+  {
+   "tag": "checkout/struggling/promo_no_criteria",
+   "request": {
+    "state": [
+     {
+      "t": "00:00.0",
+      "event": "checkout_opened",
+      "cart_total": "84.00",
+      "logged_in": false
+     },
+     {
+      "t": "00:04.2",
+      "event": "field_typed",
+      "field": "email"
+     },
+     {
+      "t": "00:21.9",
+      "event": "field_typed",
+      "field": "address_line1"
+     },
+     {
+      "t": "00:40.3",
+      "event": "field_typed",
+      "field": "city"
+     },
+     {
+      "t": "00:52.7",
+      "event": "shipping_selected",
+      "option": "standard"
+     },
+     {
+      "t": "01:03.1",
+      "event": "field_typed",
+      "field": "promo_code",
+      "value_len": 8
+     },
+     {
+      "t": "01:05.0",
+      "event": "promo_apply_clicked"
+     },
+     {
+      "t": "01:05.6",
+      "event": "promo_error",
+      "message": "Code not recognized"
+     },
+     {
+      "t": "01:12.4",
+      "event": "field_edited",
+      "field": "promo_code",
+      "value_len": 9
+     },
+     {
+      "t": "01:13.8",
+      "event": "promo_apply_clicked"
+     },
+     {
+      "t": "01:14.3",
+      "event": "promo_error",
+      "message": "Code not recognized"
+     },
+     {
+      "t": "01:20.0",
+      "event": "tab_blur"
+     },
+     {
+      "t": "01:47.5",
+      "event": "tab_focus"
+     },
+     {
+      "t": "01:49.9",
+      "event": "field_edited",
+      "field": "promo_code",
+      "value_len": 10
+     },
+     {
+      "t": "01:51.2",
+      "event": "promo_apply_clicked"
+     },
+     {
+      "t": "01:51.8",
+      "event": "promo_error",
+      "message": "Code expired"
+     },
+     {
+      "t": "01:58.0",
+      "event": "cursor_hover",
+      "target": "back_to_cart"
+     },
+     {
+      "t": "02:31.4",
+      "event": "idle",
+      "seconds": 33
+     }
+    ],
+    "questions": {
+     "promo": {
+      "type": "noul",
+      "instructions": "Is the shopper having trouble applying a promo code?"
+     }
+    }
+   },
+   "expected": null,
+   "hosted": {
+    "answers": {
+     "promo": {
+      "type": "noul",
+      "noul": 0.98
+     }
+    },
+    "usage": {
+     "input_tokens": 885,
+     "output_tokens": 20,
+     "cost": 3.717e-05
+    },
+    "latency_s": 0.2611
+   }
+  },
+  {
+   "tag": "checkout/struggling/reversed_order",
+   "request": {
+    "state": [
+     {
+      "t": "00:00.0",
+      "event": "checkout_opened",
+      "cart_total": "84.00",
+      "logged_in": false
+     },
+     {
+      "t": "00:04.2",
+      "event": "field_typed",
+      "field": "email"
+     },
+     {
+      "t": "00:21.9",
+      "event": "field_typed",
+      "field": "address_line1"
+     },
+     {
+      "t": "00:40.3",
+      "event": "field_typed",
+      "field": "city"
+     },
+     {
+      "t": "00:52.7",
+      "event": "shipping_selected",
+      "option": "standard"
+     },
+     {
+      "t": "01:03.1",
+      "event": "field_typed",
+      "field": "promo_code",
+      "value_len": 8
+     },
+     {
+      "t": "01:05.0",
+      "event": "promo_apply_clicked"
+     },
+     {
+      "t": "01:05.6",
+      "event": "promo_error",
+      "message": "Code not recognized"
+     },
+     {
+      "t": "01:12.4",
+      "event": "field_edited",
+      "field": "promo_code",
+      "value_len": 9
+     },
+     {
+      "t": "01:13.8",
+      "event": "promo_apply_clicked"
+     },
+     {
+      "t": "01:14.3",
+      "event": "promo_error",
+      "message": "Code not recognized"
+     },
+     {
+      "t": "01:20.0",
+      "event": "tab_blur"
+     },
+     {
+      "t": "01:47.5",
+      "event": "tab_focus"
+     },
+     {
+      "t": "01:49.9",
+      "event": "field_edited",
+      "field": "promo_code",
+      "value_len": 10
+     },
+     {
+      "t": "01:51.2",
+      "event": "promo_apply_clicked"
+     },
+     {
+      "t": "01:51.8",
+      "event": "promo_error",
+      "message": "Code expired"
+     },
+     {
+      "t": "01:58.0",
+      "event": "cursor_hover",
+      "target": "back_to_cart"
+     },
+     {
+      "t": "02:31.4",
+      "event": "idle",
+      "seconds": 33
+     }
+    ],
+    "questions": {
+     "returning": {
+      "type": "noul",
+      "instructions": "Is this a returning customer?",
+      "criteria": {
+       "true": "Address or card autofilled from a saved profile, a logged-in session, or fields completed almost instantly.",
+       "false": "Every field typed manually with no saved profile signals."
+      }
+     },
+     "comparing": {
+      "type": "noul",
+      "instructions": "Is the shopper comparing this purchase with other stores right now?",
+      "criteria": {
+       "true": "Repeated tab blur/focus cycles around price or shipping information, or copying the product name or total.",
+       "false": "No tab switching or copying; attention stays on the form."
+      }
+     },
+     "help": {
+      "type": "noul",
+      "instructions": "Would offering live chat help this shopper complete the purchase?",
+      "criteria": {
+       "true": "The shopper hit errors or confusion they have not resolved after several attempts and is still on the page.",
+       "false": "The shopper is progressing normally or has already resolved the issue."
+      }
+     },
+     "shipping": {
+      "type": "noul",
+      "instructions": "Is the shopper uncertain about which shipping option to choose?",
+      "criteria": {
+       "true": "The shipping option was changed more than once, or the shopper spent a long time on the shipping step, opening delivery details.",
+       "false": "Shipping chosen once without revisiting."
+      }
+     },
+     "ready": {
+      "type": "noul",
+      "instructions": "Is the shopper ready to pay right now?",
+      "criteria": {
+       "true": "Every required field is complete, payment details entered, and the shopper is on or focusing the pay button.",
+       "false": "Required fields are still missing or the shopper is still editing."
+      }
+     },
+     "fraud": {
+      "type": "noul",
+      "instructions": "Does this look like card testing or fraud rather than a normal purchase?",
+      "criteria": {
+       "true": "Many different card numbers tried in quick succession, repeated declines, or mismatched billing details changed rapidly.",
+       "false": "One or two card attempts with consistent identity details."
+      }
+     },
+     "quit": {
+      "type": "noul",
+      "instructions": "Is the shopper about to leave checkout without paying?",
+      "criteria": {
+       "true": "Long idle gaps late in the form, repeated back navigation, clearing fields, or hovering the close/cart link after errors.",
+       "false": "Steady forward progress through the form with recent activity."
+      }
+     },
+     "promo": {
+      "type": "noul",
+      "instructions": "Is the shopper having trouble applying a promo code?",
+      "criteria": {
+       "true": "The shopper entered or edited a promo code more than once, saw a promo error, or kept returning to the promo field.",
+       "false": "No promo code activity, or a single successful promo apply."
+      }
+     }
+    }
+   },
+   "expected": null,
+   "hosted": {
+    "answers": {
+     "returning": {
+      "type": "noul",
+      "noul": 0.09
+     },
+     "comparing": {
+      "type": "noul",
+      "noul": 0.31
+     },
+     "help": {
+      "type": "noul",
+      "noul": 0.79
+     },
+     "shipping": {
+      "type": "noul",
+      "noul": 0.05
+     },
+     "ready": {
+      "type": "noul",
+      "noul": 0.04
+     },
+     "fraud": {
+      "type": "noul",
+      "noul": 0.07
+     },
+     "quit": {
+      "type": "noul",
+      "noul": 0.75
+     },
+     "promo": {
+      "type": "noul",
+      "noul": 0.98
+     }
+    },
+    "usage": {
+     "input_tokens": 1399,
+     "output_tokens": 137,
+     "cost": 5.8758e-05
+    },
+    "latency_s": 0.3475
+   }
+  },
+  {
+   "tag": "grid/open_target_below",
+   "request": {
+    "state": {
+     "board": "6x6 grid, rows 0-5 top to bottom, columns 0-5 left to right",
+     "player": [
+      0,
+      0
+     ],
+     "target": [
+      5,
+      0
+     ],
+     "walls": [],
+     "current_manhattan_to_target": 5,
+     "moves": {
+      "down": {
+       "cell": [
+        1,
+        0
+       ],
+       "legal": true,
+       "manhattan_to_target": 4
+      },
+      "right": {
+       "cell": [
+        0,
+        1
+       ],
+       "legal": true,
+       "manhattan_to_target": 6
+      }
+     }
+    },
+    "questions": {
+     "move": {
+      "type": "choice",
+      "instructions": "Choose the move that gets the player closer to the target without entering a wall or leaving the board. Prefer the legal move with the smaller distance to the target.",
+      "criteria": {
+       "down": "Move one cell down (row + 1).",
+       "right": "Move one cell right (column + 1)."
+      }
+     }
+    }
+   },
+   "expected": {
+    "move": [
+     "down"
+    ]
+   },
+   "hosted": {
+    "answers": {
+     "move": {
+      "type": "choice",
+      "choice": "down",
+      "probabilities": {
+       "right": 0,
+       "down": 1
+      },
+      "confidence": 1
+     }
+    },
+    "usage": {
+     "input_tokens": 486,
+     "output_tokens": 31,
+     "cost": 2.0412e-05
+    },
+    "latency_s": 0.2931
+   }
+  },
+  {
+   "tag": "grid/open_target_right",
+   "request": {
+    "state": {
+     "board": "6x6 grid, rows 0-5 top to bottom, columns 0-5 left to right",
+     "player": [
+      0,
+      0
+     ],
+     "target": [
+      0,
+      5
+     ],
+     "walls": [],
+     "current_manhattan_to_target": 5,
+     "moves": {
+      "down": {
+       "cell": [
+        1,
+        0
+       ],
+       "legal": true,
+       "manhattan_to_target": 6
+      },
+      "right": {
+       "cell": [
+        0,
+        1
+       ],
+       "legal": true,
+       "manhattan_to_target": 4
+      }
+     }
+    },
+    "questions": {
+     "move": {
+      "type": "choice",
+      "instructions": "Choose the move that gets the player closer to the target without entering a wall or leaving the board. Prefer the legal move with the smaller distance to the target.",
+      "criteria": {
+       "down": "Move one cell down (row + 1).",
+       "right": "Move one cell right (column + 1)."
+      }
+     }
+    }
+   },
+   "expected": {
+    "move": [
+     "right"
+    ]
+   },
+   "hosted": {
+    "answers": {
+     "move": {
+      "type": "choice",
+      "choice": "right",
+      "probabilities": {
+       "right": 1,
+       "down": 0
+      },
+      "confidence": 1
+     }
+    },
+    "usage": {
+     "input_tokens": 486,
+     "output_tokens": 31,
+     "cost": 2.0412e-05
+    },
+    "latency_s": 0.3459
+   }
+  },
+  {
+   "tag": "grid/wall_blocks_down",
+   "request": {
+    "state": {
+     "board": "6x6 grid, rows 0-5 top to bottom, columns 0-5 left to right",
+     "player": [
+      2,
+      2
+     ],
+     "target": [
+      5,
+      2
+     ],
+     "walls": [
+      [
+       3,
+       2
+      ]
+     ],
+     "current_manhattan_to_target": 3,
+     "moves": {
+      "down": {
+       "cell": [
+        3,
+        2
+       ],
+       "legal": false,
+       "reason": "wall"
+      },
+      "right": {
+       "cell": [
+        2,
+        3
+       ],
+       "legal": true,
+       "manhattan_to_target": 4
+      }
+     }
+    },
+    "questions": {
+     "move": {
+      "type": "choice",
+      "instructions": "Choose the move that gets the player closer to the target without entering a wall or leaving the board. Prefer the legal move with the smaller distance to the target.",
+      "criteria": {
+       "down": "Move one cell down (row + 1).",
+       "right": "Move one cell right (column + 1)."
+      }
+     }
+    }
+   },
+   "expected": {
+    "move": [
+     "right"
+    ]
+   },
+   "hosted": {
+    "answers": {
+     "move": {
+      "type": "choice",
+      "choice": "right",
+      "probabilities": {
+       "right": 0.81,
+       "down": 0.19
+      },
+      "confidence": 0.63
+     }
+    },
+    "usage": {
+     "input_tokens": 489,
+     "output_tokens": 31,
+     "cost": 2.0538e-05
+    },
+    "latency_s": 0.2683
+   }
+  },
+  {
+   "tag": "grid/wall_blocks_right",
+   "request": {
+    "state": {
+     "board": "6x6 grid, rows 0-5 top to bottom, columns 0-5 left to right",
+     "player": [
+      2,
+      2
+     ],
+     "target": [
+      2,
+      5
+     ],
+     "walls": [
+      [
+       2,
+       3
+      ]
+     ],
+     "current_manhattan_to_target": 3,
+     "moves": {
+      "down": {
+       "cell": [
+        3,
+        2
+       ],
+       "legal": true,
+       "manhattan_to_target": 4
+      },
+      "right": {
+       "cell": [
+        2,
+        3
+       ],
+       "legal": false,
+       "reason": "wall"
+      }
+     }
+    },
+    "questions": {
+     "move": {
+      "type": "choice",
+      "instructions": "Choose the move that gets the player closer to the target without entering a wall or leaving the board. Prefer the legal move with the smaller distance to the target.",
+      "criteria": {
+       "down": "Move one cell down (row + 1).",
+       "right": "Move one cell right (column + 1)."
+      }
+     }
+    }
+   },
+   "expected": {
+    "move": [
+     "down"
+    ]
+   },
+   "hosted": {
+    "answers": {
+     "move": {
+      "type": "choice",
+      "choice": "down",
+      "probabilities": {
+       "right": 0.14,
+       "down": 0.86
+      },
+      "confidence": 0.71
+     }
+    },
+    "usage": {
+     "input_tokens": 489,
+     "output_tokens": 31,
+     "cost": 2.0538e-05
+    },
+    "latency_s": 0.3278
+   }
+  },
+  {
+   "tag": "grid/diagonal_tie",
+   "request": {
+    "state": {
+     "board": "6x6 grid, rows 0-5 top to bottom, columns 0-5 left to right",
+     "player": [
+      1,
+      1
+     ],
+     "target": [
+      4,
+      4
+     ],
+     "walls": [],
+     "current_manhattan_to_target": 6,
+     "moves": {
+      "down": {
+       "cell": [
+        2,
+        1
+       ],
+       "legal": true,
+       "manhattan_to_target": 5
+      },
+      "right": {
+       "cell": [
+        1,
+        2
+       ],
+       "legal": true,
+       "manhattan_to_target": 5
+      }
+     }
+    },
+    "questions": {
+     "move": {
+      "type": "choice",
+      "instructions": "Choose the move that gets the player closer to the target without entering a wall or leaving the board. Prefer the legal move with the smaller distance to the target.",
+      "criteria": {
+       "down": "Move one cell down (row + 1).",
+       "right": "Move one cell right (column + 1)."
+      }
+     }
+    }
+   },
+   "expected": {
+    "move": [
+     "down",
+     "right"
+    ]
+   },
+   "hosted": {
+    "answers": {
+     "move": {
+      "type": "choice",
+      "choice": "down",
+      "probabilities": {
+       "right": 0.12,
+       "down": 0.88
+      },
+      "confidence": 0.77
+     }
+    },
+    "usage": {
+     "input_tokens": 486,
+     "output_tokens": 31,
+     "cost": 2.0412e-05
+    },
+    "latency_s": 0.3038
+   }
+  },
+  {
+   "tag": "grid/edge_only_down",
+   "request": {
+    "state": {
+     "board": "6x6 grid, rows 0-5 top to bottom, columns 0-5 left to right",
+     "player": [
+      2,
+      5
+     ],
+     "target": [
+      5,
+      5
+     ],
+     "walls": [],
+     "current_manhattan_to_target": 3,
+     "moves": {
+      "down": {
+       "cell": [
+        3,
+        5
+       ],
+       "legal": true,
+       "manhattan_to_target": 2
+      },
+      "right": {
+       "cell": [
+        2,
+        6
+       ],
+       "legal": false,
+       "reason": "off board"
+      }
+     }
+    },
+    "questions": {
+     "move": {
+      "type": "choice",
+      "instructions": "Choose the move that gets the player closer to the target without entering a wall or leaving the board. Prefer the legal move with the smaller distance to the target.",
+      "criteria": {
+       "down": "Move one cell down (row + 1).",
+       "right": "Move one cell right (column + 1)."
+      }
+     }
+    }
+   },
+   "expected": {
+    "move": [
+     "down"
+    ]
+   },
+   "hosted": {
+    "answers": {
+     "move": {
+      "type": "choice",
+      "choice": "down",
+      "probabilities": {
+       "right": 0,
+       "down": 1
+      },
+      "confidence": 1
+     }
+    },
+    "usage": {
+     "input_tokens": 485,
+     "output_tokens": 31,
+     "cost": 2.037e-05
+    },
+    "latency_s": 0.3088
+   }
+  },
+  {
+   "tag": "grid/edge_only_right",
+   "request": {
+    "state": {
+     "board": "6x6 grid, rows 0-5 top to bottom, columns 0-5 left to right",
+     "player": [
+      5,
+      2
+     ],
+     "target": [
+      5,
+      5
+     ],
+     "walls": [],
+     "current_manhattan_to_target": 3,
+     "moves": {
+      "down": {
+       "cell": [
+        6,
+        2
+       ],
+       "legal": false,
+       "reason": "off board"
+      },
+      "right": {
+       "cell": [
+        5,
+        3
+       ],
+       "legal": true,
+       "manhattan_to_target": 2
+      }
+     }
+    },
+    "questions": {
+     "move": {
+      "type": "choice",
+      "instructions": "Choose the move that gets the player closer to the target without entering a wall or leaving the board. Prefer the legal move with the smaller distance to the target.",
+      "criteria": {
+       "down": "Move one cell down (row + 1).",
+       "right": "Move one cell right (column + 1)."
+      }
+     }
+    }
+   },
+   "expected": {
+    "move": [
+     "right"
+    ]
+   },
+   "hosted": {
+    "answers": {
+     "move": {
+      "type": "choice",
+      "choice": "right",
+      "probabilities": {
+       "right": 1,
+       "down": 0
+      },
+      "confidence": 1
+     }
+    },
+    "usage": {
+     "input_tokens": 485,
+     "output_tokens": 31,
+     "cost": 2.037e-05
+    },
+    "latency_s": 0.4156
+   }
+  },
+  {
+   "tag": "grid/both_closer_down_better",
+   "request": {
+    "state": {
+     "board": "6x6 grid, rows 0-5 top to bottom, columns 0-5 left to right",
+     "player": [
+      0,
+      0
+     ],
+     "target": [
+      4,
+      1
+     ],
+     "walls": [],
+     "current_manhattan_to_target": 5,
+     "moves": {
+      "down": {
+       "cell": [
+        1,
+        0
+       ],
+       "legal": true,
+       "manhattan_to_target": 4
+      },
+      "right": {
+       "cell": [
+        0,
+        1
+       ],
+       "legal": true,
+       "manhattan_to_target": 4
+      }
+     }
+    },
+    "questions": {
+     "move": {
+      "type": "choice",
+      "instructions": "Choose the move that gets the player closer to the target without entering a wall or leaving the board. Prefer the legal move with the smaller distance to the target.",
+      "criteria": {
+       "down": "Move one cell down (row + 1).",
+       "right": "Move one cell right (column + 1)."
+      }
+     }
+    }
+   },
+   "expected": {
+    "move": [
+     "down",
+     "right"
+    ]
+   },
+   "hosted": {
+    "answers": {
+     "move": {
+      "type": "choice",
+      "choice": "down",
+      "probabilities": {
+       "down": 0.83,
+       "right": 0.17
+      },
+      "confidence": 0.67
+     }
+    },
+    "usage": {
+     "input_tokens": 486,
+     "output_tokens": 31,
+     "cost": 2.0412e-05
+    },
+    "latency_s": 0.302
+   }
+  },
+  {
+   "tag": "grid/cadence/seq0",
+   "request": {
+    "state": {
+     "board": "6x6 grid, rows 0-5 top to bottom, columns 0-5 left to right",
+     "player": [
+      1,
+      1
+     ],
+     "target": [
+      4,
+      4
+     ],
+     "walls": [],
+     "current_manhattan_to_target": 6,
+     "moves": {
+      "down": {
+       "cell": [
+        2,
+        1
+       ],
+       "legal": true,
+       "manhattan_to_target": 5
+      },
+      "right": {
+       "cell": [
+        1,
+        2
+       ],
+       "legal": true,
+       "manhattan_to_target": 5
+      }
+     }
+    },
+    "questions": {
+     "move": {
+      "type": "choice",
+      "instructions": "Choose the move that gets the player closer to the target without entering a wall or leaving the board. Prefer the legal move with the smaller distance to the target.",
+      "criteria": {
+       "down": "Move one cell down (row + 1).",
+       "right": "Move one cell right (column + 1)."
+      }
+     }
+    }
+   },
+   "expected": {
+    "move": [
+     "down",
+     "right"
+    ]
+   },
+   "hosted": {
+    "answers": {
+     "move": {
+      "type": "choice",
+      "choice": "down",
+      "probabilities": {
+       "down": 0.89,
+       "right": 0.11
+      },
+      "confidence": 0.77
+     }
+    },
+    "usage": {
+     "input_tokens": 486,
+     "output_tokens": 31,
+     "cost": 2.0412e-05
+    },
+    "latency_s": 0.403
+   }
+  },
+  {
+   "tag": "grid/cadence/seq1",
+   "request": {
+    "state": {
+     "board": "6x6 grid, rows 0-5 top to bottom, columns 0-5 left to right",
+     "player": [
+      1,
+      1
+     ],
+     "target": [
+      4,
+      4
+     ],
+     "walls": [],
+     "current_manhattan_to_target": 6,
+     "moves": {
+      "down": {
+       "cell": [
+        2,
+        1
+       ],
+       "legal": true,
+       "manhattan_to_target": 5
+      },
+      "right": {
+       "cell": [
+        1,
+        2
+       ],
+       "legal": true,
+       "manhattan_to_target": 5
+      }
+     }
+    },
+    "questions": {
+     "move": {
+      "type": "choice",
+      "instructions": "Choose the move that gets the player closer to the target without entering a wall or leaving the board. Prefer the legal move with the smaller distance to the target.",
+      "criteria": {
+       "down": "Move one cell down (row + 1).",
+       "right": "Move one cell right (column + 1)."
+      }
+     }
+    }
+   },
+   "expected": {
+    "move": [
+     "down",
+     "right"
+    ]
+   },
+   "hosted": {
+    "answers": {
+     "move": {
+      "type": "choice",
+      "choice": "down",
+      "probabilities": {
+       "down": 0.87,
+       "right": 0.13
+      },
+      "confidence": 0.74
+     }
+    },
+    "usage": {
+     "input_tokens": 486,
+     "output_tokens": 31,
+     "cost": 2.0412e-05
+    },
+    "latency_s": 0.4685
+   }
+  },
+  {
+   "tag": "grid/cadence/seq2",
+   "request": {
+    "state": {
+     "board": "6x6 grid, rows 0-5 top to bottom, columns 0-5 left to right",
+     "player": [
+      1,
+      1
+     ],
+     "target": [
+      4,
+      4
+     ],
+     "walls": [],
+     "current_manhattan_to_target": 6,
+     "moves": {
+      "down": {
+       "cell": [
+        2,
+        1
+       ],
+       "legal": true,
+       "manhattan_to_target": 5
+      },
+      "right": {
+       "cell": [
+        1,
+        2
+       ],
+       "legal": true,
+       "manhattan_to_target": 5
+      }
+     }
+    },
+    "questions": {
+     "move": {
+      "type": "choice",
+      "instructions": "Choose the move that gets the player closer to the target without entering a wall or leaving the board. Prefer the legal move with the smaller distance to the target.",
+      "criteria": {
+       "down": "Move one cell down (row + 1).",
+       "right": "Move one cell right (column + 1)."
+      }
+     }
+    }
+   },
+   "expected": {
+    "move": [
+     "down",
+     "right"
+    ]
+   },
+   "hosted": {
+    "answers": {
+     "move": {
+      "type": "choice",
+      "choice": "down",
+      "probabilities": {
+       "right": 0.14,
+       "down": 0.86
+      },
+      "confidence": 0.72
+     }
+    },
+    "usage": {
+     "input_tokens": 486,
+     "output_tokens": 31,
+     "cost": 2.0412e-05
+    },
+    "latency_s": 0.2817
+   }
+  },
+  {
+   "tag": "grid/cadence/seq3",
+   "request": {
+    "state": {
+     "board": "6x6 grid, rows 0-5 top to bottom, columns 0-5 left to right",
+     "player": [
+      1,
+      1
+     ],
+     "target": [
+      4,
+      4
+     ],
+     "walls": [],
+     "current_manhattan_to_target": 6,
+     "moves": {
+      "down": {
+       "cell": [
+        2,
+        1
+       ],
+       "legal": true,
+       "manhattan_to_target": 5
+      },
+      "right": {
+       "cell": [
+        1,
+        2
+       ],
+       "legal": true,
+       "manhattan_to_target": 5
+      }
+     }
+    },
+    "questions": {
+     "move": {
+      "type": "choice",
+      "instructions": "Choose the move that gets the player closer to the target without entering a wall or leaving the board. Prefer the legal move with the smaller distance to the target.",
+      "criteria": {
+       "down": "Move one cell down (row + 1).",
+       "right": "Move one cell right (column + 1)."
+      }
+     }
+    }
+   },
+   "expected": {
+    "move": [
+     "down",
+     "right"
+    ]
+   },
+   "hosted": {
+    "answers": {
+     "move": {
+      "type": "choice",
+      "choice": "down",
+      "probabilities": {
+       "down": 0.87,
+       "right": 0.13
+      },
+      "confidence": 0.73
+     }
+    },
+    "usage": {
+     "input_tokens": 486,
+     "output_tokens": 31,
+     "cost": 2.0412e-05
+    },
+    "latency_s": 0.3454
+   }
+  },
+  {
+   "tag": "grid/cadence/seq4",
+   "request": {
+    "state": {
+     "board": "6x6 grid, rows 0-5 top to bottom, columns 0-5 left to right",
+     "player": [
+      1,
+      1
+     ],
+     "target": [
+      4,
+      4
+     ],
+     "walls": [],
+     "current_manhattan_to_target": 6,
+     "moves": {
+      "down": {
+       "cell": [
+        2,
+        1
+       ],
+       "legal": true,
+       "manhattan_to_target": 5
+      },
+      "right": {
+       "cell": [
+        1,
+        2
+       ],
+       "legal": true,
+       "manhattan_to_target": 5
+      }
+     }
+    },
+    "questions": {
+     "move": {
+      "type": "choice",
+      "instructions": "Choose the move that gets the player closer to the target without entering a wall or leaving the board. Prefer the legal move with the smaller distance to the target.",
+      "criteria": {
+       "down": "Move one cell down (row + 1).",
+       "right": "Move one cell right (column + 1)."
+      }
+     }
+    }
+   },
+   "expected": {
+    "move": [
+     "down",
+     "right"
+    ]
+   },
+   "hosted": {
+    "answers": {
+     "move": {
+      "type": "choice",
+      "choice": "down",
+      "probabilities": {
+       "down": 0.87,
+       "right": 0.13
+      },
+      "confidence": 0.74
+     }
+    },
+    "usage": {
+     "input_tokens": 486,
+     "output_tokens": 31,
+     "cost": 2.0412e-05
+    },
+    "latency_s": 0.3492
+   }
+  },
+  {
+   "tag": "grid/cadence/seq5",
+   "request": {
+    "state": {
+     "board": "6x6 grid, rows 0-5 top to bottom, columns 0-5 left to right",
+     "player": [
+      1,
+      1
+     ],
+     "target": [
+      4,
+      4
+     ],
+     "walls": [],
+     "current_manhattan_to_target": 6,
+     "moves": {
+      "down": {
+       "cell": [
+        2,
+        1
+       ],
+       "legal": true,
+       "manhattan_to_target": 5
+      },
+      "right": {
+       "cell": [
+        1,
+        2
+       ],
+       "legal": true,
+       "manhattan_to_target": 5
+      }
+     }
+    },
+    "questions": {
+     "move": {
+      "type": "choice",
+      "instructions": "Choose the move that gets the player closer to the target without entering a wall or leaving the board. Prefer the legal move with the smaller distance to the target.",
+      "criteria": {
+       "down": "Move one cell down (row + 1).",
+       "right": "Move one cell right (column + 1)."
+      }
+     }
+    }
+   },
+   "expected": {
+    "move": [
+     "down",
+     "right"
+    ]
+   },
+   "hosted": {
+    "answers": {
+     "move": {
+      "type": "choice",
+      "choice": "down",
+      "probabilities": {
+       "down": 0.87,
+       "right": 0.13
+      },
+      "confidence": 0.74
+     }
+    },
+    "usage": {
+     "input_tokens": 486,
+     "output_tokens": 31,
+     "cost": 2.0412e-05
+    },
+    "latency_s": 0.309
+   }
+  },
+  {
+   "tag": "grid/cadence/seq6",
+   "request": {
+    "state": {
+     "board": "6x6 grid, rows 0-5 top to bottom, columns 0-5 left to right",
+     "player": [
+      1,
+      1
+     ],
+     "target": [
+      4,
+      4
+     ],
+     "walls": [],
+     "current_manhattan_to_target": 6,
+     "moves": {
+      "down": {
+       "cell": [
+        2,
+        1
+       ],
+       "legal": true,
+       "manhattan_to_target": 5
+      },
+      "right": {
+       "cell": [
+        1,
+        2
+       ],
+       "legal": true,
+       "manhattan_to_target": 5
+      }
+     }
+    },
+    "questions": {
+     "move": {
+      "type": "choice",
+      "instructions": "Choose the move that gets the player closer to the target without entering a wall or leaving the board. Prefer the legal move with the smaller distance to the target.",
+      "criteria": {
+       "down": "Move one cell down (row + 1).",
+       "right": "Move one cell right (column + 1)."
+      }
+     }
+    }
+   },
+   "expected": {
+    "move": [
+     "down",
+     "right"
+    ]
+   },
+   "hosted": {
+    "answers": {
+     "move": {
+      "type": "choice",
+      "choice": "down",
+      "probabilities": {
+       "right": 0.12,
+       "down": 0.88
+      },
+      "confidence": 0.75
+     }
+    },
+    "usage": {
+     "input_tokens": 486,
+     "output_tokens": 31,
+     "cost": 2.0412e-05
+    },
+    "latency_s": 0.3683
+   }
+  },
+  {
+   "tag": "grid/cadence/seq7",
+   "request": {
+    "state": {
+     "board": "6x6 grid, rows 0-5 top to bottom, columns 0-5 left to right",
+     "player": [
+      1,
+      1
+     ],
+     "target": [
+      4,
+      4
+     ],
+     "walls": [],
+     "current_manhattan_to_target": 6,
+     "moves": {
+      "down": {
+       "cell": [
+        2,
+        1
+       ],
+       "legal": true,
+       "manhattan_to_target": 5
+      },
+      "right": {
+       "cell": [
+        1,
+        2
+       ],
+       "legal": true,
+       "manhattan_to_target": 5
+      }
+     }
+    },
+    "questions": {
+     "move": {
+      "type": "choice",
+      "instructions": "Choose the move that gets the player closer to the target without entering a wall or leaving the board. Prefer the legal move with the smaller distance to the target.",
+      "criteria": {
+       "down": "Move one cell down (row + 1).",
+       "right": "Move one cell right (column + 1)."
+      }
+     }
+    }
+   },
+   "expected": {
+    "move": [
+     "down",
+     "right"
+    ]
+   },
+   "hosted": {
+    "answers": {
+     "move": {
+      "type": "choice",
+      "choice": "down",
+      "probabilities": {
+       "down": 0.89,
+       "right": 0.11
+      },
+      "confidence": 0.77
+     }
+    },
+    "usage": {
+     "input_tokens": 486,
+     "output_tokens": 31,
+     "cost": 2.0412e-05
+    },
+    "latency_s": 0.3147
+   }
+  },
+  {
+   "tag": "grid/cadence/conc3",
+   "request": {
+    "state": {
+     "board": "6x6 grid, rows 0-5 top to bottom, columns 0-5 left to right",
+     "player": [
+      1,
+      1
+     ],
+     "target": [
+      4,
+      4
+     ],
+     "walls": [],
+     "current_manhattan_to_target": 6,
+     "moves": {
+      "down": {
+       "cell": [
+        2,
+        1
+       ],
+       "legal": true,
+       "manhattan_to_target": 5
+      },
+      "right": {
+       "cell": [
+        1,
+        2
+       ],
+       "legal": true,
+       "manhattan_to_target": 5
+      }
+     }
+    },
+    "questions": {
+     "move": {
+      "type": "choice",
+      "instructions": "Choose the move that gets the player closer to the target without entering a wall or leaving the board. Prefer the legal move with the smaller distance to the target.",
+      "criteria": {
+       "down": "Move one cell down (row + 1).",
+       "right": "Move one cell right (column + 1)."
+      }
+     }
+    }
+   },
+   "expected": {
+    "move": [
+     "down",
+     "right"
+    ]
+   },
+   "hosted": {
+    "answers": {
+     "move": {
+      "type": "choice",
+      "choice": "down",
+      "probabilities": {
+       "right": 0.12,
+       "down": 0.88
+      },
+      "confidence": 0.75
+     }
+    },
+    "usage": {
+     "input_tokens": 486,
+     "output_tokens": 31,
+     "cost": 2.0412e-05
+    },
+    "latency_s": 0.3014
+   }
+  },
+  {
+   "tag": "grid/cadence/conc0",
+   "request": {
+    "state": {
+     "board": "6x6 grid, rows 0-5 top to bottom, columns 0-5 left to right",
+     "player": [
+      1,
+      1
+     ],
+     "target": [
+      4,
+      4
+     ],
+     "walls": [],
+     "current_manhattan_to_target": 6,
+     "moves": {
+      "down": {
+       "cell": [
+        2,
+        1
+       ],
+       "legal": true,
+       "manhattan_to_target": 5
+      },
+      "right": {
+       "cell": [
+        1,
+        2
+       ],
+       "legal": true,
+       "manhattan_to_target": 5
+      }
+     }
+    },
+    "questions": {
+     "move": {
+      "type": "choice",
+      "instructions": "Choose the move that gets the player closer to the target without entering a wall or leaving the board. Prefer the legal move with the smaller distance to the target.",
+      "criteria": {
+       "down": "Move one cell down (row + 1).",
+       "right": "Move one cell right (column + 1)."
+      }
+     }
+    }
+   },
+   "expected": {
+    "move": [
+     "down",
+     "right"
+    ]
+   },
+   "hosted": {
+    "answers": {
+     "move": {
+      "type": "choice",
+      "choice": "down",
+      "probabilities": {
+       "down": 0.88,
+       "right": 0.12
+      },
+      "confidence": 0.75
+     }
+    },
+    "usage": {
+     "input_tokens": 486,
+     "output_tokens": 31,
+     "cost": 2.0412e-05
+    },
+    "latency_s": 0.3108
+   }
+  },
+  {
+   "tag": "grid/cadence/conc2",
+   "request": {
+    "state": {
+     "board": "6x6 grid, rows 0-5 top to bottom, columns 0-5 left to right",
+     "player": [
+      1,
+      1
+     ],
+     "target": [
+      4,
+      4
+     ],
+     "walls": [],
+     "current_manhattan_to_target": 6,
+     "moves": {
+      "down": {
+       "cell": [
+        2,
+        1
+       ],
+       "legal": true,
+       "manhattan_to_target": 5
+      },
+      "right": {
+       "cell": [
+        1,
+        2
+       ],
+       "legal": true,
+       "manhattan_to_target": 5
+      }
+     }
+    },
+    "questions": {
+     "move": {
+      "type": "choice",
+      "instructions": "Choose the move that gets the player closer to the target without entering a wall or leaving the board. Prefer the legal move with the smaller distance to the target.",
+      "criteria": {
+       "down": "Move one cell down (row + 1).",
+       "right": "Move one cell right (column + 1)."
+      }
+     }
+    }
+   },
+   "expected": {
+    "move": [
+     "down",
+     "right"
+    ]
+   },
+   "hosted": {
+    "answers": {
+     "move": {
+      "type": "choice",
+      "choice": "down",
+      "probabilities": {
+       "right": 0.12,
+       "down": 0.88
+      },
+      "confidence": 0.75
+     }
+    },
+    "usage": {
+     "input_tokens": 486,
+     "output_tokens": 31,
+     "cost": 2.0412e-05
+    },
+    "latency_s": 0.3362
+   }
+  },
+  {
+   "tag": "grid/cadence/conc1",
+   "request": {
+    "state": {
+     "board": "6x6 grid, rows 0-5 top to bottom, columns 0-5 left to right",
+     "player": [
+      1,
+      1
+     ],
+     "target": [
+      4,
+      4
+     ],
+     "walls": [],
+     "current_manhattan_to_target": 6,
+     "moves": {
+      "down": {
+       "cell": [
+        2,
+        1
+       ],
+       "legal": true,
+       "manhattan_to_target": 5
+      },
+      "right": {
+       "cell": [
+        1,
+        2
+       ],
+       "legal": true,
+       "manhattan_to_target": 5
+      }
+     }
+    },
+    "questions": {
+     "move": {
+      "type": "choice",
+      "instructions": "Choose the move that gets the player closer to the target without entering a wall or leaving the board. Prefer the legal move with the smaller distance to the target.",
+      "criteria": {
+       "down": "Move one cell down (row + 1).",
+       "right": "Move one cell right (column + 1)."
+      }
+     }
+    }
+   },
+   "expected": {
+    "move": [
+     "down",
+     "right"
+    ]
+   },
+   "hosted": {
+    "answers": {
+     "move": {
+      "type": "choice",
+      "choice": "down",
+      "probabilities": {
+       "down": 0.87,
+       "right": 0.13
+      },
+      "confidence": 0.74
+     }
+    },
+    "usage": {
+     "input_tokens": 486,
+     "output_tokens": 31,
+     "cost": 2.0412e-05
+    },
+    "latency_s": 0.3581
+   }
+  },
+  {
+   "tag": "feed/single/ragebait_1",
+   "request": {
+    "state": {
+     "post": "THEY are coming for your kids' school lunches next. Share this before it gets deleted!!! Everyone needs to see how much they hate us."
+    },
+    "questions": {
+     "hide": {
+      "type": "noul",
+      "instructions": "Rule: Hide posts written to make me angry or afraid so I react and share. Should this post be hidden under this rule?",
+      "criteria": {
+       "true": "The post is engineered to provoke outrage or fear: alarmist or exaggerated claims, an enemy to blame, urgency to share before it is removed, dehumanizing labels, or emotional bait with little verifiable information.",
+       "false": "The post informs, asks, jokes, or shares a personal update. Serious or negative topics are fine when presented calmly, with sources or specifics, and without pressure to react or share."
+      }
+     }
+    }
+   },
+   "expected": null,
+   "hosted": {
+    "answers": {
+     "hide": {
+      "type": "noul",
+      "noul": 0.98
+     }
+    },
+    "usage": {
+     "input_tokens": 426,
+     "output_tokens": 20,
+     "cost": 1.7892e-05
+    },
+    "latency_s": 0.3074
+   }
+  },
+  {
+   "tag": "feed/single/ragebait_2",
+   "request": {
+    "state": {
+     "post": "If you're not FURIOUS about what the city council did last night you're part of the problem. Repost so the traitors can't hide."
+    },
+    "questions": {
+     "hide": {
+      "type": "noul",
+      "instructions": "Rule: Hide posts written to make me angry or afraid so I react and share. Should this post be hidden under this rule?",
+      "criteria": {
+       "true": "The post is engineered to provoke outrage or fear: alarmist or exaggerated claims, an enemy to blame, urgency to share before it is removed, dehumanizing labels, or emotional bait with little verifiable information.",
+       "false": "The post informs, asks, jokes, or shares a personal update. Serious or negative topics are fine when presented calmly, with sources or specifics, and without pressure to react or share."
+      }
+     }
+    }
+   },
+   "expected": null,
+   "hosted": {
+    "answers": {
+     "hide": {
+      "type": "noul",
+      "noul": 0.96
+     }
+    },
+    "usage": {
+     "input_tokens": 431,
+     "output_tokens": 20,
+     "cost": 1.8102e-05
+    },
+    "latency_s": 0.3645
+   }
+  },
+  {
+   "tag": "feed/single/fearbait_1",
+   "request": {
+    "state": {
+     "post": "WARNING: doctors won't tell you this but the new water filters are poisoning families in your area. Forward to everyone you love NOW."
+    },
+    "questions": {
+     "hide": {
+      "type": "noul",
+      "instructions": "Rule: Hide posts written to make me angry or afraid so I react and share. Should this post be hidden under this rule?",
+      "criteria": {
+       "true": "The post is engineered to provoke outrage or fear: alarmist or exaggerated claims, an enemy to blame, urgency to share before it is removed, dehumanizing labels, or emotional bait with little verifiable information.",
+       "false": "The post informs, asks, jokes, or shares a personal update. Serious or negative topics are fine when presented calmly, with sources or specifics, and without pressure to react or share."
+      }
+     }
+    }
+   },
+   "expected": null,
+   "hosted": {
+    "answers": {
+     "hide": {
+      "type": "noul",
+      "noul": 0.98
+     }
+    },
+    "usage": {
+     "input_tokens": 424,
+     "output_tokens": 20,
+     "cost": 1.7808e-05
+    },
+    "latency_s": 0.2981
+   }
+  },
+  {
+   "tag": "feed/single/benign_1",
+   "request": {
+    "state": {
+     "post": "Council approved the new bike lane on 5th Ave last night, 6-3 vote. Construction starts in March; minutes are on the city site."
+    },
+    "questions": {
+     "hide": {
+      "type": "noul",
+      "instructions": "Rule: Hide posts written to make me angry or afraid so I react and share. Should this post be hidden under this rule?",
+      "criteria": {
+       "true": "The post is engineered to provoke outrage or fear: alarmist or exaggerated claims, an enemy to blame, urgency to share before it is removed, dehumanizing labels, or emotional bait with little verifiable information.",
+       "false": "The post informs, asks, jokes, or shares a personal update. Serious or negative topics are fine when presented calmly, with sources or specifics, and without pressure to react or share."
+      }
+     }
+    }
+   },
+   "expected": null,
+   "hosted": {
+    "answers": {
+     "hide": {
+      "type": "noul",
+      "noul": 0.03
+     }
+    },
+    "usage": {
+     "input_tokens": 429,
+     "output_tokens": 20,
+     "cost": 1.8018e-05
+    },
+    "latency_s": 0.2719
+   }
+  },
+  {
+   "tag": "feed/single/benign_2",
+   "request": {
+    "state": {
+     "post": "Finally finished my sourdough starter after three failed attempts. Loaf number one is ugly but tastes great."
+    },
+    "questions": {
+     "hide": {
+      "type": "noul",
+      "instructions": "Rule: Hide posts written to make me angry or afraid so I react and share. Should this post be hidden under this rule?",
+      "criteria": {
+       "true": "The post is engineered to provoke outrage or fear: alarmist or exaggerated claims, an enemy to blame, urgency to share before it is removed, dehumanizing labels, or emotional bait with little verifiable information.",
+       "false": "The post informs, asks, jokes, or shares a personal update. Serious or negative topics are fine when presented calmly, with sources or specifics, and without pressure to react or share."
+      }
+     }
+    }
+   },
+   "expected": null,
+   "hosted": {
+    "answers": {
+     "hide": {
+      "type": "noul",
+      "noul": 0.02
+     }
+    },
+    "usage": {
+     "input_tokens": 419,
+     "output_tokens": 20,
+     "cost": 1.7598e-05
+    },
+    "latency_s": 0.3369
+   }
+  },
+  {
+   "tag": "feed/single/benign_3",
+   "request": {
+    "state": {
+     "post": "Reminder that flu shots are free at the clinic on Main St through Friday. Took ten minutes for me this morning."
+    },
+    "questions": {
+     "hide": {
+      "type": "noul",
+      "instructions": "Rule: Hide posts written to make me angry or afraid so I react and share. Should this post be hidden under this rule?",
+      "criteria": {
+       "true": "The post is engineered to provoke outrage or fear: alarmist or exaggerated claims, an enemy to blame, urgency to share before it is removed, dehumanizing labels, or emotional bait with little verifiable information.",
+       "false": "The post informs, asks, jokes, or shares a personal update. Serious or negative topics are fine when presented calmly, with sources or specifics, and without pressure to react or share."
+      }
+     }
+    }
+   },
+   "expected": null,
+   "hosted": {
+    "answers": {
+     "hide": {
+      "type": "noul",
+      "noul": 0.03
+     }
+    },
+    "usage": {
+     "input_tokens": 420,
+     "output_tokens": 20,
+     "cost": 1.764e-05
+    },
+    "latency_s": 0.3736
+   }
+  },
+  {
+   "tag": "feed/batched_six",
+   "request": {
+    "state": {
+     "posts": [
+      {
+       "id": 0,
+       "text": "THEY are coming for your kids' school lunches next. Share this before it gets deleted!!! Everyone needs to see how much they hate us."
+      },
+      {
+       "id": 1,
+       "text": "If you're not FURIOUS about what the city council did last night you're part of the problem. Repost so the traitors can't hide."
+      },
+      {
+       "id": 2,
+       "text": "WARNING: doctors won't tell you this but the new water filters are poisoning families in your area. Forward to everyone you love NOW."
+      },
+      {
+       "id": 3,
+       "text": "Council approved the new bike lane on 5th Ave last night, 6-3 vote. Construction starts in March; minutes are on the city site."
+      },
+      {
+       "id": 4,
+       "text": "Finally finished my sourdough starter after three failed attempts. Loaf number one is ugly but tastes great."
+      },
+      {
+       "id": 5,
+       "text": "Reminder that flu shots are free at the clinic on Main St through Friday. Took ten minutes for me this morning."
+      }
+     ]
+    },
+    "questions": {
+     "hide_0": {
+      "type": "noul",
+      "instructions": "Rule: Hide posts written to make me angry or afraid so I react and share. Should the post with id 0 be hidden under this rule?",
+      "criteria": {
+       "true": "The post is engineered to provoke outrage or fear: alarmist or exaggerated claims, an enemy to blame, urgency to share before it is removed, dehumanizing labels, or emotional bait with little verifiable information.",
+       "false": "The post informs, asks, jokes, or shares a personal update. Serious or negative topics are fine when presented calmly, with sources or specifics, and without pressure to react or share."
+      }
+     },
+     "hide_1": {
+      "type": "noul",
+      "instructions": "Rule: Hide posts written to make me angry or afraid so I react and share. Should the post with id 1 be hidden under this rule?",
+      "criteria": {
+       "true": "The post is engineered to provoke outrage or fear: alarmist or exaggerated claims, an enemy to blame, urgency to share before it is removed, dehumanizing labels, or emotional bait with little verifiable information.",
+       "false": "The post informs, asks, jokes, or shares a personal update. Serious or negative topics are fine when presented calmly, with sources or specifics, and without pressure to react or share."
+      }
+     },
+     "hide_2": {
+      "type": "noul",
+      "instructions": "Rule: Hide posts written to make me angry or afraid so I react and share. Should the post with id 2 be hidden under this rule?",
+      "criteria": {
+       "true": "The post is engineered to provoke outrage or fear: alarmist or exaggerated claims, an enemy to blame, urgency to share before it is removed, dehumanizing labels, or emotional bait with little verifiable information.",
+       "false": "The post informs, asks, jokes, or shares a personal update. Serious or negative topics are fine when presented calmly, with sources or specifics, and without pressure to react or share."
+      }
+     },
+     "hide_3": {
+      "type": "noul",
+      "instructions": "Rule: Hide posts written to make me angry or afraid so I react and share. Should the post with id 3 be hidden under this rule?",
+      "criteria": {
+       "true": "The post is engineered to provoke outrage or fear: alarmist or exaggerated claims, an enemy to blame, urgency to share before it is removed, dehumanizing labels, or emotional bait with little verifiable information.",
+       "false": "The post informs, asks, jokes, or shares a personal update. Serious or negative topics are fine when presented calmly, with sources or specifics, and without pressure to react or share."
+      }
+     },
+     "hide_4": {
+      "type": "noul",
+      "instructions": "Rule: Hide posts written to make me angry or afraid so I react and share. Should the post with id 4 be hidden under this rule?",
+      "criteria": {
+       "true": "The post is engineered to provoke outrage or fear: alarmist or exaggerated claims, an enemy to blame, urgency to share before it is removed, dehumanizing labels, or emotional bait with little verifiable information.",
+       "false": "The post informs, asks, jokes, or shares a personal update. Serious or negative topics are fine when presented calmly, with sources or specifics, and without pressure to react or share."
+      }
+     },
+     "hide_5": {
+      "type": "noul",
+      "instructions": "Rule: Hide posts written to make me angry or afraid so I react and share. Should the post with id 5 be hidden under this rule?",
+      "criteria": {
+       "true": "The post is engineered to provoke outrage or fear: alarmist or exaggerated claims, an enemy to blame, urgency to share before it is removed, dehumanizing labels, or emotional bait with little verifiable information.",
+       "false": "The post informs, asks, jokes, or shares a personal update. Serious or negative topics are fine when presented calmly, with sources or specifics, and without pressure to react or share."
+      }
+     }
+    }
+   },
+   "expected": null,
+   "hosted": {
+    "answers": {
+     "hide_0": {
+      "type": "noul",
+      "noul": 0.98
+     },
+     "hide_1": {
+      "type": "noul",
+      "noul": 0.98
+     },
+     "hide_2": {
+      "type": "noul",
+      "noul": 0.98
+     },
+     "hide_3": {
+      "type": "noul",
+      "noul": 0.03
+     },
+     "hide_4": {
+      "type": "noul",
+      "noul": 0.02
+     },
+     "hide_5": {
+      "type": "noul",
+      "noul": 0.03
+     }
+    },
+    "usage": {
+     "input_tokens": 1337,
+     "output_tokens": 112,
+     "cost": 5.6154e-05
+    },
+    "latency_s": 0.3684
+   }
+  },
+  {
+   "tag": "probe/score_three_levels",
+   "request": {
+    "state": {
+     "message": "This is the third time I'm asking. Fix it today or I cancel."
+    },
+    "questions": {
+     "anger": {
+      "type": "score",
+      "instructions": "How angry is the customer?",
+      "criteria": [
+       "Calm",
+       "Frustrated",
+       "Very angry"
+      ]
+     }
+    }
+   },
+   "expected": null,
+   "hosted": {
+    "answers": {
+     "anger": {
+      "type": "score",
+      "score": 1.98,
+      "legend": {
+       "0": "Calm",
+       "1": "Frustrated",
+       "2": "Very angry"
+      },
+      "probabilities": {
+       "0": 0,
+       "1": 0.02,
+       "2": 0.98
+      },
+      "confidence": 0.96
+     }
+    },
+    "usage": {
+     "input_tokens": 322,
+     "output_tokens": 17,
+     "cost": 1.3524e-05
+    },
+    "latency_s": 0.2963
+   }
+  },
+  {
+   "tag": "probe/string_state",
+   "request": {
+    "state": "Order 4412 shipped yesterday and arrives Friday.",
+    "questions": {
+     "shipped": {
+      "type": "noul",
+      "instructions": "Has the order shipped?",
+      "criteria": {
+       "true": "Shipment confirmed",
+       "false": "Not shipped"
+      }
+     }
+    }
+   },
+   "expected": null,
+   "hosted": {
+    "answers": {
+     "shipped": {
+      "type": "noul",
+      "noul": 0.98
+     }
+    },
+    "usage": {
+     "input_tokens": 305,
+     "output_tokens": 21,
+     "cost": 1.281e-05
+    },
+    "latency_s": 0.3233
+   }
+  }
+ ],
+ "validation_cases": [
+  {
+   "tag": "probe/unknown_question_type",
+   "request": {
+    "state": {
+     "x": 1
+    },
+    "questions": {
+     "q": {
+      "type": "boolean",
+      "instructions": "Is x one?"
+     }
+    }
+   },
+   "expected_status": 400,
+   "hosted_accepted": false,
+   "hosted": null
+  },
+  {
+   "tag": "probe/numeric_state_root",
+   "request": {
+    "state": 42,
+    "questions": {
+     "even": {
+      "type": "noul",
+      "instructions": "Is the state an even number?",
+      "criteria": {
+       "true": "Even",
+       "false": "Odd"
+      }
+     }
+    }
+   },
+   "expected_status": 400,
+   "hosted_accepted": false,
+   "hosted": null
+  },
+  {
+   "tag": "probe/structured_noul_criteria",
+   "request": {
+    "state": [
+     {
+      "t": "00:00.0",
+      "event": "checkout_opened",
+      "cart_total": "84.00",
+      "logged_in": false
+     },
+     {
+      "t": "00:04.2",
+      "event": "field_typed",
+      "field": "email"
+     },
+     {
+      "t": "00:21.9",
+      "event": "field_typed",
+      "field": "address_line1"
+     },
+     {
+      "t": "00:40.3",
+      "event": "field_typed",
+      "field": "city"
+     },
+     {
+      "t": "00:52.7",
+      "event": "shipping_selected",
+      "option": "standard"
+     },
+     {
+      "t": "01:03.1",
+      "event": "field_typed",
+      "field": "promo_code",
+      "value_len": 8
+     },
+     {
+      "t": "01:05.0",
+      "event": "promo_apply_clicked"
+     },
+     {
+      "t": "01:05.6",
+      "event": "promo_error",
+      "message": "Code not recognized"
+     },
+     {
+      "t": "01:12.4",
+      "event": "field_edited",
+      "field": "promo_code",
+      "value_len": 9
+     },
+     {
+      "t": "01:13.8",
+      "event": "promo_apply_clicked"
+     },
+     {
+      "t": "01:14.3",
+      "event": "promo_error",
+      "message": "Code not recognized"
+     },
+     {
+      "t": "01:20.0",
+      "event": "tab_blur"
+     },
+     {
+      "t": "01:47.5",
+      "event": "tab_focus"
+     },
+     {
+      "t": "01:49.9",
+      "event": "field_edited",
+      "field": "promo_code",
+      "value_len": 10
+     },
+     {
+      "t": "01:51.2",
+      "event": "promo_apply_clicked"
+     },
+     {
+      "t": "01:51.8",
+      "event": "promo_error",
+      "message": "Code expired"
+     },
+     {
+      "t": "01:58.0",
+      "event": "cursor_hover",
+      "target": "back_to_cart"
+     },
+     {
+      "t": "02:31.4",
+      "event": "idle",
+      "seconds": 33
+     }
+    ],
+    "questions": {
+     "promo": {
+      "type": "noul",
+      "instructions": {
+       "question": "Promo trouble?",
+       "focus": "promo_code events"
+      },
+      "criteria": {
+       "true": {
+        "what": "repeated promo errors"
+       },
+       "false": {
+        "what": "no promo activity"
+       }
+      }
+     }
+    }
+   },
+   "expected_status": 400,
+   "hosted_accepted": true,
+   "hosted": {
+    "answers": {
+     "promo": {
+      "type": "noul",
+      "noul": 0.98
+     }
+    },
+    "usage": {
+     "input_tokens": 930,
+     "output_tokens": 20,
+     "cost": 3.906e-05
+    },
+    "latency_s": 0.2809
+   }
+  },
+  {
+   "tag": "probe/choice_null_description",
+   "request": {
+    "state": {
+     "animal": "The animal barks."
+    },
+    "questions": {
+     "kind": {
+      "type": "choice",
+      "instructions": "Which animal?",
+      "criteria": {
+       "dog": null,
+       "cat": null
+      }
+     }
+    }
+   },
+   "expected_status": 400,
+   "hosted_accepted": true,
+   "hosted": {
+    "answers": {
+     "kind": {
+      "type": "choice",
+      "choice": "dog",
+      "probabilities": {
+       "cat": 0,
+       "dog": 1
+      },
+      "confidence": 1
+     }
+    },
+    "usage": {
+     "input_tokens": 296,
+     "output_tokens": 31,
+     "cost": 1.2432e-05
+    },
+    "latency_s": 0.4084
+   }
+  }
+ ],
+ "reclassified_at": "2026-09-20",
+ "reclassification_note": "Schema 2 moved two probe cases, structured Noul criteria and null Choice descriptions, from cases to validation_cases. The hosted API answered both; the local strict schema rejects them, so they cannot be compared answer to answer. No request, state, label, or recorded hosted answer was altered."
+}

@@ -51,27 +51,47 @@ behavior and decisiveness; they are not an accuracy benchmark.
 
 ## Wire format
 
-**Endpoint and envelope, observed and documented.** Hosted responses contain
-`model`, `answers`, `usage`, `id`, and `provider`. `usage` has `input_tokens`,
-`output_tokens`, and `cost`; cost equaled input tokens at OpenRouter's listed
-$0.042 per million, and output tokens were nonzero but free. The local response
+**Endpoint and envelope, observed and documented.** All 40 successful hosted
+responses in the probe carried `model`, `provider`, `answers`, `usage`, and an
+opaque `id`. The stored artifact strips `id`, the account identifier, and the
+response headers, so the shape is recorded in its `endpoint` block rather than in
+the sanitized records. `usage` has `input_tokens`, `output_tokens`,
+and `cost`; cost equaled input tokens at OpenRouter's listed $0.042 per million,
+and output tokens were nonzero but free. The native `POST /v1/systemone` response
 has `model`, `answers`, and a local `usage` with token, pass, timing, and memory
 counters instead. Both key answers by the caller's question IDs with the same
 `type`, `noul`, `choice`, `probabilities`, `confidence`, `score`, and `legend`
-fields. This project is inspired by the primitives, not a drop-in replacement.
-See the [native API contract](https://docs.typesafe.ai/api).
+fields. See the [native API contract](https://docs.typesafe.ai/api).
+
+**Compatibility route, local implementation.** The server also answers
+`POST /api/alpha/decisions` with the hosted envelope: `id`, `model`, `provider`,
+`answers`, `usage`. The local `id` is a fresh random identifier per response, kept
+only in that response, because the server writes no request log to correlate it
+with. That route reports `provider: "local"`, `cost: 0.0` because
+nothing is billed, and `output_tokens` equal to the number of questions, since
+one verified label position is read per question rather than a hosted structure
+around it. It accepts only `model: "diffusiongemma-local"`. A client written for
+hosted Jev therefore needs exactly one changed field, the model name, plus a base
+URL; this is a minimal client adapter, not drop-in SDK compatibility, and the
+answers come from a different model.
 
 **Validation, observed.** OpenRouter rejected an unknown question type and a
 numeric state root with **HTTP 400** and a discriminated-union message listing
 `noul`, `choice`, `score`, or `string`, `record`, `array`. TypeSafe's own
-documentation lists 422 for validation. The local API returns 422 and accepts
-any JSON root for `state`, so a numeric or boolean root that works locally
-fails on the hosted API.
+documentation lists 422 for validation. The native local route returns 422 and
+accepts any JSON root for `state`, so a numeric or boolean root that works there
+fails on the hosted API. The compatibility route matches the hosted behavior
+instead: it rejects a scalar `state` root and reports failures as HTTP 400 with
+`{"error_code", "error_summary"}`. Neither local shape echoes the request, because
+a rejected payload can contain private source code.
 
 **Rubrics and schemas, observed and documented.** The hosted API accepted
 object-valued `instructions` and Noul `criteria`, `null` Choice descriptions,
 and a Noul with no criteria at all. Local instructions and descriptions are
-required strings, with no separate Noul criteria field. Local Choice accepts
+required strings. Local Noul now accepts the same optional `criteria` rubric and
+renders both sides in the prompt; unlike the hosted API it requires `true` and
+`false` together, because a one-sided rubric has no defined meaning here. Local
+Choice accepts
 **2–26 alternatives**, native Choice up to **255**; local requests accept at
 most **32 questions**. In the one case tested, removing the Noul criteria did
 not change the hosted answer (0.98 either way); that is one case, not a
@@ -126,11 +146,14 @@ between the two largest probabilities within 0.01 rounding, for example
 probabilities 0.81/0.19 with confidence 0.63 and 0.02/0.98 with 0.96. TypeSafe
 documents confidence as derived from the probabilities without publishing the
 formula, so a top-two margin is an inference, not a confirmed contract. Local
-Choice and Score return `1 - H(p)/log(N)`, the entropy concentration, which is
-a different statistic: 0.81/0.19 gives 0.30 locally. Simple-JEV uses the
-largest probability instead. Thresholds on `confidence` therefore do not
-transfer between the three systems. Noul has no confidence field in any of
-them. See the [native confidence guide](https://docs.typesafe.ai/confidence).
+Choice and Score now return that same top-two margin, replacing the earlier
+entropy concentration `1 - H(p)/log(N)`, which gave 0.30 where the hosted API
+gave 0.63 for 0.81/0.19. Thresholds tuned against the entropy value do not carry
+over. Simple-JEV uses the largest probability instead, so its confidence still
+differs from both. Noul has no confidence field in any of them. The local
+probabilities feeding the formula come from a different model, so matching the
+statistic does not make the numbers interchangeable.
+See the [native confidence guide](https://docs.typesafe.ai/confidence).
 
 ## Question and answer conditioning
 
@@ -228,6 +251,83 @@ local comparisons can identify improvements over the local baseline; the
 archive provides context, not a controlled claim of closing a particular
 percentage of Jev's advantage. See the [retrieval evaluation](retrieval-benchmark.md).
 
+## Matched suite, replayed against both sides
+
+The probe's own requests are frozen as a replayable suite,
+[`benchmarks/matched-suite-2026-09-19.json`](../benchmarks/matched-suite-2026-09-19.json):
+38 comparable cases, each carrying the exact state and questions sent to hosted Jev, the
+hosted answer, its token usage, and its measured round trip, plus 4 validation cases the
+local schema rejects. Every state is synthetic. Neither side receives an `options` block,
+so each uses its own documented defaults.
+
+**Two of those validation cases are a parity gap, not shared strictness.** Hosted Jev
+answered a structured Noul `criteria` object and `null` Choice descriptions; the local
+strict schema rejects both. They carry `hosted_accepted: true` and their hosted answer,
+and the report counts them as `hosted_only_inputs`. They are excluded from the answer
+comparison because there is no local answer to compare against. Schema 2 of the suite
+moved them out of `cases` for that reason; no request, label, or recorded answer changed.
+
+Labels exist for the 20 grid cases only, and they are derived mechanically from each
+state and the question's own rule: a legal move with the smallest remaining Manhattan
+distance. Ties accept either key. **Only 6 of those 20 states have a single correct
+key**; the rest are genuine ties that any answer passes, so grid accuracy is a weak
+signal rather than a quality verdict. The checkout and feed cases have no ground truth
+and are compared for agreement and stability only, because hosted output is not a label.
+No case ranks a list, so nDCG and MRR are undefined here and are left unreported rather
+than filled in with a placeholder.
+
+Replay it against a running local server with:
+
+```bash
+uv run jev-local benchmark-matched --output /tmp/matched-local.json
+```
+
+That writes per-case agreement, the labelled score for both sides, and three separate
+timings: local round trip, local `usage.total_ms` inference time, and the hosted round
+trip, which includes network transport and is never subtracted from the local numbers.
+
+### Measured result, 2026-09-20
+
+One paired run of each local profile plus a fresh hosted run, all issued from the same
+Apple M4 Max with 36 GiB of memory on one residential network, so transport and workload
+origin are common to every column. Full record:
+[`benchmarks/matched-comparison-2026-09-20.json`](../benchmarks/matched-comparison-2026-09-20.json).
+
+| | local, `fast` | local, `accuracy` | hosted `jev-1.13` |
+| --- | --- | --- | --- |
+| cases answered | 38, 0 failures | 38, 0 failures | 38, 0 failures |
+| labelled accuracy | 20/20 | 20/20 | 20/20 |
+| top-choice agreement with hosted | 20/21 | 20/21 | — |
+| round trip, median | 0.336 s | 0.384 s | 0.326 s |
+| round trip, p90 | 0.901 s | 0.991 s | 0.511 s |
+| server inference, median | 335 ms | 383 ms | not reported by the API |
+| peak MLX memory | 18.68 GB | 18.68 GB | — |
+| cost for the 38 calls | 0 | 0 | 0.0011 USD |
+
+**The accuracy profile bought nothing measurable here.** Eight reads produced the same
+20/20, the same 20/21 agreement, and the same largest answer gap as one read, while
+adding about 14 percent to median round trip. That is a result about this suite, not a
+general finding, and it is the reason the shipped default stays `fast`.
+
+**Hosted is tighter at the tail.** The medians are within 60 ms of each other, but hosted
+p90 of 0.511 s beats local p90 of 0.901 s. Local p90 is dominated by the larger batched
+requests and by first-request warm-up: `checkout/struggling` is the first case of each
+run and took 4.005 s on the fast run against a 0.336 s median.
+
+**The one disagreement is `probe/score_three_levels`.** Hosted scored 1.98 of 2 with 0.96
+confidence; local scored about 1.02, one level lower, on a state whose text reads as a
+third escalation. Hosted's reading is the more plausible one. It is a single case, so it
+is evidence of a difference in calibration, not a measured quality gap.
+
+**Hosted answers were stable across the two days.** Replaying the same 38 requests on
+2026-09-20 reproduced all 21 comparable winning labels from 2026-09-19, with a largest
+numeric drift of 0.03 on probabilities the API reports rounded to two decimals.
+
+This is one run per profile on one machine on one day. No trial was repeated, so no
+confidence interval is claimed on any latency number, and **no accuracy winner is claimed
+at all**: at 20/20 against 20 labels where 14 accept either key, this suite cannot
+separate the two systems.
+
 ## Injection and ambiguous evidence, shared risks
 
 Local instructions tell the model to treat state as data; that instruction is
@@ -277,8 +377,12 @@ version pinned by tests, chosen at the integration boundary rather than by a
 request field. Usage counts unique prompt-token prefixes. Diagnostics are gated
 behind an environment flag, with a test proving public answers do not change.
 This adapter already verifies single-token labels and pins its prompt through
-tests; template versioning and unique-prefix usage accounting are open ideas,
-not implemented changes.
+tests, and now carries a prompt template version chosen at the integration
+boundary (`jev-local-prompt-v2`, reported by `/health`) so recorded accuracy
+numbers can be tied to the wording that produced them. Unique-prefix usage
+accounting remains an open idea. Sharing one prefill across per-question reads in
+independent mode is also open: packed mode already shares a prefill, and the
+change would move the numerically sensitive prefill path described above.
 
 **Decision decomposition, inspiration.** Its driving demo splits a control
 decision into a binary `drive`/`stop` Choice and a conditional path Choice, and

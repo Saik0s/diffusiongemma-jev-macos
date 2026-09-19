@@ -9,8 +9,17 @@ from typing import Literal, Protocol
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
+from diffusion_jev.canvas import PROMPT_TEMPLATE_VERSION
+from diffusion_jev.compat import (
+    COMPAT_PATH,
+    CompatRequest,
+    CompatResponse,
+    to_compat_response,
+    to_decision_request,
+)
 from diffusion_jev.schemas import DecisionRequest, DecisionResponse, StrictModel
 
 MODEL_ID = "diffusiongemma-local"
@@ -40,7 +49,13 @@ class BodyLimitMiddleware:
             chunk = message.get("body", b"")
             size += len(chunk)
             if size > self.limit:
-                response = JSONResponse(status_code=413, content={"detail": "Request too large"})
+                # Match the path's error shape; the handlers below never see this.
+                oversized: dict[str, object] = (
+                    {"error_code": 413, "error_summary": "Request too large"}
+                    if scope.get("path") == COMPAT_PATH
+                    else {"detail": "Request too large"}
+                )
+                response = JSONResponse(status_code=413, content=oversized)
                 await response(scope, receive, send)
                 return
             chunks.append(chunk)
@@ -62,6 +77,7 @@ class BodyLimitMiddleware:
 class HealthResponse(StrictModel):
     status: Literal["ok"] = "ok"
     model: str = MODEL_ID
+    prompt_template: str = PROMPT_TEMPLATE_VERSION
 
 
 class ModelEntry(StrictModel):
@@ -97,10 +113,22 @@ def create_app(engine_factory: Callable[[], DecisionEngine]) -> FastAPI:
     app = FastAPI(title="Local JEV decisions", version="0.1.0", lifespan=lifespan)
     app.add_middleware(BodyLimitMiddleware)
 
+    def error_response(request: Request, status: int, detail: str) -> JSONResponse:
+        # Neither shape echoes the request: details can contain private source code.
+        if request.url.path == COMPAT_PATH:
+            return JSONResponse(
+                status_code=400 if status == 422 else status,
+                content={"error_code": 400 if status == 422 else status, "error_summary": detail},
+            )
+        return JSONResponse(status_code=status, content={"detail": detail})
+
     @app.exception_handler(RequestValidationError)
     async def validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
-        # Pydantic's usual details echo inputs, which can contain private source code.
-        return JSONResponse(status_code=422, content={"detail": "Invalid request"})
+        return error_response(request, 422, "Invalid request")
+
+    @app.exception_handler(StarletteHTTPException)
+    async def http_error(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+        return error_response(request, exc.status_code, str(exc.detail))
 
     @app.get("/health")
     async def health() -> HealthResponse:
@@ -110,8 +138,7 @@ def create_app(engine_factory: Callable[[], DecisionEngine]) -> FastAPI:
     async def models() -> ModelList:
         return ModelList(data=[ModelEntry()])
 
-    @app.post("/v1/systemone")
-    async def decide(request: DecisionRequest) -> DecisionResponse:
+    async def run_decision(request: DecisionRequest) -> DecisionResponse:
         nonlocal admitted
         if engine is None or executor is None:
             raise HTTPException(status_code=503, detail="Model is not ready")
@@ -137,5 +164,13 @@ def create_app(engine_factory: Callable[[], DecisionEngine]) -> FastAPI:
             raise HTTPException(status_code=422, detail="Request cannot be processed") from None
         except Exception:
             raise HTTPException(status_code=500, detail="Inference failed") from None
+
+    @app.post("/v1/systemone")
+    async def decide(request: DecisionRequest) -> DecisionResponse:
+        return await run_decision(request)
+
+    @app.post(COMPAT_PATH)
+    async def decisions(request: CompatRequest) -> CompatResponse:
+        return to_compat_response(await run_decision(to_decision_request(request)))
 
     return app

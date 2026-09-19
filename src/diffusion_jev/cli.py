@@ -15,9 +15,12 @@ from diffusion_jev.provisioning import (
     validate_local_model,
 )
 
+SAMPLING_PROFILES = {"fast": 1, "accuracy": 8}
+
 
 class ServeArguments(argparse.Namespace):
     command: str
+    profile: str
     model: Path | None
     host: str
     port: int
@@ -40,6 +43,11 @@ def main(argv: list[str] | None = None) -> None:
 
         benchmark_main(argv[1:])
         return
+    if argv and argv[0] == "benchmark-matched":
+        from diffusion_jev.matched_suite import main as matched_main
+
+        matched_main(argv[1:])
+        return
     parser = argparse.ArgumentParser(description="Serve local DiffusionGemma structured decisions")
     commands = parser.add_subparsers(dest="command", required=True)
     for command, help_text in (
@@ -56,6 +64,10 @@ def main(argv: list[str] | None = None) -> None:
             help="Experimental reasoning budget before decisions (default: 0); may be slower",
         )
         serve.add_argument(
+            "--profile", choices=tuple(SAMPLING_PROFILES), default="fast",
+            help="Default decision reads per request: fast=1, accuracy=8 (slower)",
+        )
+        serve.add_argument(
             "--cache-limit-mib", type=int, default=512,
             help="MLX allocator cache limit in MiB (default: 512); not a total memory limit",
         )
@@ -69,6 +81,11 @@ def main(argv: list[str] | None = None) -> None:
     commands.add_parser("demo", help="Run structured-decision demos", add_help=False)
     commands.add_parser(
         "benchmark-search", help="Evaluate retrieval on CodeSearchNet Python", add_help=False
+    )
+    commands.add_parser(
+        "benchmark-matched",
+        help="Replay the frozen matched suite against a running server",
+        add_help=False,
     )
     args = parser.parse_args(argv, namespace=ServeArguments())
     if args.max_prompt_tokens < 1:
@@ -114,8 +131,13 @@ def main(argv: list[str] | None = None) -> None:
             model_path=model_path, max_prompt_tokens=args.max_prompt_tokens,
             cache_limit_bytes=args.cache_limit_mib * 1024**2,
             reasoning_tokens=args.reasoning_tokens,
+            default_samples=SAMPLING_PROFILES[args.profile],
         )
-        print(f"Model loaded in {engine.load_seconds:.1f}s. Starting the local API.", flush=True)
+        print(
+            f"Model loaded in {engine.load_seconds:.1f}s. Starting the local API "
+            f"with the {args.profile} profile.",
+            flush=True,
+        )
         return engine
 
     uvicorn.run(create_app(load_engine), host=args.host, port=args.port, access_log=False)

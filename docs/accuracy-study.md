@@ -39,6 +39,19 @@ Top-1 asks whether the first result is labeled relevant. nDCG@10 measures the
 ordering of the first ten results; MRR@10 rewards an early first relevant result.
 Higher values are better for all three metrics.
 
+### Which build produced these numbers
+
+Every number in this study was measured on prompt template
+**`jev-local-prompt-v1`**, with state objects serialized using sorted JSON keys.
+Two later changes affect the rendered prompt: Noul `criteria` are now rendered
+when supplied, and state keys keep the caller's field order instead of being
+sorted. Reordering keys changes the token sequence the model reads, so these
+results describe the v1 template and are not automatically reproducible on
+`jev-local-prompt-v2`. Re-measurement on v2 is outstanding work, listed with the
+other unfinished items in the README. The `confidence` statistic also changed from entropy concentration to the
+top-two margin; it never entered any accuracy figure here, which uses top-1,
+nDCG@10, and MRR@10 only.
+
 As the experiment runner gained fingerprint coverage, reports added the OptiQ
 vision-sidecar hash and the `transformers` and `tokenizers` package versions.
 For the original and current OptiQ baseline, all previously recorded model and

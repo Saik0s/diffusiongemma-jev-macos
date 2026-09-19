@@ -15,9 +15,17 @@ class StrictModel(BaseModel):
     model_config = ConfigDict(strict=True, extra="forbid")
 
 
+class NoulCriteria(StrictModel):
+    """Hosted Jev's optional true/false rubric. Both sides are required when supplied."""
+
+    true: Description
+    false: Description
+
+
 class NoulQuestion(StrictModel):
     type: Literal["noul"]
     instructions: Description
+    criteria: NoulCriteria | None = None
 
 
 class ChoiceQuestion(StrictModel):
